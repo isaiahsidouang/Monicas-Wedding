@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { CheckSquare, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import HelpBanner from '@/components/HelpBanner'
 import type { ChecklistItem } from '@/types'
 
 const DEFAULT_CHECKLIST: Omit<ChecklistItem, 'id' | 'completed'>[] = [
@@ -156,6 +157,23 @@ export default function ChecklistPage() {
             Add Task
           </button>
         </div>
+
+        {/* Help */}
+        <HelpBanner
+          storageKey="checklist"
+          title="How to use the Wedding Checklist"
+          intro="Pre-loaded with tasks organized by how far out from the wedding you are — from 12 months before down to the day-of."
+          steps={[
+            { n: 1, text: 'Tasks are grouped by timeframe. Work through them top to bottom as the date approaches.' },
+            { n: 2, text: 'Check the box when a task is done. Progress is tracked on the Home dashboard.' },
+            { n: 3, text: 'Use "Add Task" to create custom tasks for anything specific to Monica\'s wedding.' },
+            { n: 4, text: 'Set due dates on tasks to keep track of deadlines (deposit due, RSVP cutoff, etc.).' },
+          ]}
+          tips={[
+            { text: 'High-priority tasks are marked — tackle those first if you\'re short on time.' },
+            { text: 'Completed tasks stay visible so you have a record of what\'s been done.' },
+          ]}
+        />
 
         {/* Progress bar */}
         <div className="flex flex-col gap-1">

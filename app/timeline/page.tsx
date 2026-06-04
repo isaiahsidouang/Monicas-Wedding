@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Clock, Plus, Trash2, Edit2, Check, X, GripVertical } from 'lucide-react'
+import HelpBanner from '@/components/HelpBanner'
 import type { TimelineItem } from '@/types'
 
 const DEFAULT_TIMELINE: Omit<TimelineItem, 'id'>[] = [
@@ -98,6 +99,23 @@ export default function TimelinePage() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-8 flex flex-col gap-6">
       {/* Header */}
+      {/* Help */}
+      <HelpBanner
+        storageKey="timeline"
+        title="How to use Day-Of Timeline"
+        intro="Build a minute-by-minute schedule for the wedding day so every vendor, family member, and coordinator knows exactly what happens when."
+        steps={[
+          { n: 1, text: 'Click "Add Event" and set the time, label, and category (Prep, Ceremony, Photos, Reception).' },
+          { n: 2, text: 'Add a location and responsible person for each event — e.g. "Florist arrives" → location: venue lobby, responsible: coordinator.' },
+          { n: 3, text: 'Events are automatically sorted by time, so add them in any order.' },
+          { n: 4, text: 'Share or print the final timeline and distribute to vendors, the wedding party, and family.' },
+        ]}
+        tips={[
+          { text: 'Start with the ceremony time and work backwards (getting ready, photos) and forwards (reception, send-off).' },
+          { text: 'Build in buffer time — photos almost always run long.' },
+        ]}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold flex items-center gap-2">

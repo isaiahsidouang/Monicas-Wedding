@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Search, MapPin, Users, Waves, Send } from 'lucide-react'
 import { knownVenues, weddingProfile } from '@/lib/monica'
+import HelpBanner from '@/components/HelpBanner'
 import type { KnownVenue, DraftEmail } from '@/types'
 
 const REGION_LABELS: Record<string, string> = {
@@ -90,6 +91,22 @@ export default function VenuesPage() {
           Select venues to generate AI-drafted inquiry emails.
         </p>
       </div>
+
+      {/* Help */}
+      <HelpBanner
+        storageKey="venues"
+        title="How to use Find Venues"
+        steps={[
+          { n: 1, text: 'Browse the 19 pre-loaded luxury venues (Ritz-Carlton, St. Regis, Four Seasons, Rosewood) filtered by region.' },
+          { n: 2, text: 'Check the box on any venue you haven\'t contacted yet, or want to reach out to again.' },
+          { n: 3, text: 'Click "Generate Inquiry Emails" — AI drafts a personalized inquiry for each selected venue using Monica\'s wedding details.' },
+          { n: 4, text: 'Go to the Drafts tab to review every email before it\'s sent to Gmail.' },
+        ]}
+        tips={[
+          { text: 'All 19 venues are automatically included in every Excel export, even before you scan your inbox.' },
+          { text: 'Oceanfront venues are marked with a blue badge — important for Caribbean and PR locations.' },
+        ]}
+      />
 
       {/* Region filter */}
       <div className="flex flex-wrap gap-2">

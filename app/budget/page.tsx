@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DollarSign, Plus, Trash2, Edit2, Check, X } from 'lucide-react'
+import HelpBanner from '@/components/HelpBanner'
 import type { BudgetItem } from '@/types'
 
 const DEFAULT_BUDGET: Omit<BudgetItem, 'id'>[] = [
@@ -84,6 +85,22 @@ export default function BudgetPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6">
+      {/* Help */}
+      <HelpBanner
+        storageKey="budget"
+        title="How to use Budget Tracker"
+        steps={[
+          { n: 1, text: 'Click "Add Line" to create a budget category (e.g. Venue, Catering, Flowers, Photography).' },
+          { n: 2, text: 'Enter the Estimated cost upfront — this is your target/cap for that category.' },
+          { n: 3, text: 'As you get quotes and make payments, fill in Actual cost and Paid so far.' },
+          { n: 4, text: 'The summary bar at the top shows total estimated vs. total paid at a glance.' },
+        ]}
+        tips={[
+          { text: 'Monica\'s venue budget cap is $115,000 — add that as your Venue line first.' },
+          { text: 'Estimated vs. Actual difference shows you where you\'re over or under budget.' },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold flex items-center gap-2">

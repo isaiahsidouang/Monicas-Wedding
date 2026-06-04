@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Users, Plus, Trash2, Edit2, Check, X } from 'lucide-react'
+import HelpBanner from '@/components/HelpBanner'
 import type { VendorRecord, VendorCategory } from '@/types'
 
 const CATEGORIES: VendorCategory[] = [
@@ -72,6 +73,21 @@ export default function VendorsPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6">
       {/* Header */}
+      {/* Help */}
+      <HelpBanner
+        storageKey="vendors"
+        title="How to use Vendor Tracker"
+        steps={[
+          { n: 1, text: 'Add each vendor you\'re researching or have hired — photographer, videographer, florist, band/DJ, hair & makeup, officiant, etc.' },
+          { n: 2, text: 'Update the status as you go: Researching → Contacted → Proposal Received → Booked.' },
+          { n: 3, text: 'Once booked, add the vendor to Contracts to track the deposit and payment schedule.' },
+        ]}
+        tips={[
+          { text: 'Booked vendor count shows on the Home dashboard so you always know where you stand.' },
+          { text: 'Add notes to each vendor with links, ratings, or anything from your conversations.' },
+        ]}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold flex items-center gap-2">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import { Mail, RefreshCw, LogIn, SortAsc, FlaskConical } from 'lucide-react'
+import HelpBanner from '@/components/HelpBanner'
 import VenueCard from '@/components/VenueCard'
 import type { VenueRecord, DraftEmail } from '@/types'
 
@@ -116,6 +117,23 @@ export default function ScanPage() {
           Scans Monica&apos;s Gmail for venue & vendor emails, then uses AI to extract and prioritize them.
         </p>
       </div>
+
+      {/* Help */}
+      <HelpBanner
+        storageKey="scan"
+        title="How to use Inbox Scanner"
+        steps={[
+          { n: 1, text: 'Sign in with Google to connect Monica\'s Gmail (meniasmonica@gmail.com or oseiandmonica@gmail.com).' },
+          { n: 2, text: 'Click "Scan Inbox" — the AI reads the last 365 days of emails and pulls out every venue and vendor contact automatically.' },
+          { n: 3, text: 'Review the cards. Priority score 8–10 = great fit for Monica\'s requirements. Click the status badge to update (contacted → interested → toured → booked).' },
+          { n: 4, text: 'Click "Draft Follow-up" on any card to have AI write a follow-up email. It goes to Drafts for review before sending.' },
+          { n: 5, text: 'You can scan as many times as you want — new emails merge in, existing records are not duplicated.' },
+        ]}
+        tips={[
+          { text: 'Use "Test Mode" to try the full pipeline without Gmail — it runs 6 sample venue emails through the AI so you can see how it works.' },
+          { text: 'Expand any card ("More details") to see the contact, pros/cons, and a direct link back to the original Gmail thread.' },
+        ]}
+      />
 
       {/* Scan button */}
       <div className="flex flex-col gap-3">

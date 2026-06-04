@@ -3,6 +3,7 @@
 import { useSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { Mail, Search, FileText, Download, LogIn, Heart, CheckSquare, DollarSign, Users, FileCheck, Clock, Upload } from 'lucide-react'
+import HelpBanner from '@/components/HelpBanner'
 import { useEffect, useState } from 'react'
 import type { VenueRecord, DraftEmail, ChecklistItem, BudgetItem, VendorRecord, ContractRecord } from '@/types'
 
@@ -50,6 +51,25 @@ export default function Dashboard() {
         <h1 className="text-2xl font-semibold" style={{ color: 'var(--accent)' }}>Monica&apos;s Wedding Planner</h1>
         <p style={{ color: 'var(--text-muted)' }}>Everything in one place — venues, vendors, budget, checklist, and more.</p>
       </div>
+
+      {/* Help */}
+      <HelpBanner
+        storageKey="home"
+        title="How to use Monica's Wedding Planner"
+        intro="Follow these steps to get the most out of the app. You only need to set up once — everything saves automatically."
+        steps={[
+          { n: 1, text: 'Import your existing spreadsheet using the "Import Spreadsheet" button below — it will pull in all your venues, contacts, and notes.' },
+          { n: 2, text: 'Sign in with Google to connect Monica\'s Gmail account. This unlocks inbox scanning and the ability to save email drafts.' },
+          { n: 3, text: 'Go to Scan Inbox to analyze the last year of venue/vendor emails. AI extracts contacts, pricing, availability, and scores each one.' },
+          { n: 4, text: 'Go to Find Venues to browse 19 pre-loaded luxury venues. Select any you haven\'t contacted and generate AI inquiry emails in one click.' },
+          { n: 5, text: 'Check Drafts to review every AI-written email before it goes anywhere. Edit, then send to Gmail Drafts — Monica sends from her phone.' },
+          { n: 6, text: 'Use Checklist, Budget, Vendors, Contracts, and Day-Of to track everything else as the wedding gets closer.' },
+        ]}
+        tips={[
+          { text: 'Export to Excel any time to download a color-coded spreadsheet matching Monica\'s existing format.' },
+          { text: 'All data is saved in the browser — no account needed beyond the Google sign-in for Gmail.' },
+        ]}
+      />
 
       {/* Auth prompt */}
       {!session && (

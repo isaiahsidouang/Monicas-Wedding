@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { FileCheck, Plus, Trash2, Edit2, Check, X, AlertCircle } from 'lucide-react'
+import HelpBanner from '@/components/HelpBanner'
 import type { ContractRecord } from '@/types'
 
 const fmt = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
@@ -78,6 +79,22 @@ export default function ContractsPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-8 flex flex-col gap-6">
       {/* Header */}
+      {/* Help */}
+      <HelpBanner
+        storageKey="contracts"
+        title="How to use Contracts & Deposits"
+        steps={[
+          { n: 1, text: 'Add a contract entry as soon as a vendor or venue sends a contract to sign.' },
+          { n: 2, text: 'Record the total amount, deposit amount, and deposit due date so nothing slips through.' },
+          { n: 3, text: 'Check "Deposit Paid" and "Contract Signed" as each is completed.' },
+          { n: 4, text: 'Set a balance due date for the remaining payment — the card will highlight it when it\'s upcoming.' },
+        ]}
+        tips={[
+          { text: 'Pending contracts (unsigned or unpaid deposit) show on the Home dashboard as a reminder.' },
+          { text: 'Add the venue contract first — it usually has the earliest deposit deadline.' },
+        ]}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold flex items-center gap-2">

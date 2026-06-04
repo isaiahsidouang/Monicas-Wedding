@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import { FileText, LogIn, CheckCheck } from 'lucide-react'
+import HelpBanner from '@/components/HelpBanner'
 import DraftCard from '@/components/DraftCard'
 import type { DraftEmail } from '@/types'
 
@@ -62,6 +63,22 @@ export default function DraftsPage() {
           Review AI-drafted emails, edit if needed, then send to Gmail Drafts for Monica to send.
         </p>
       </div>
+
+      {/* Help */}
+      <HelpBanner
+        storageKey="drafts"
+        title="How to use Email Drafts"
+        steps={[
+          { n: 1, text: 'Drafts are created automatically when you use Scan Inbox (follow-up emails) or Find Venues (inquiry emails).' },
+          { n: 2, text: 'Read each draft carefully. Click the subject line or body to edit anything before sending.' },
+          { n: 3, text: 'Click "Send to Gmail Drafts" — this saves the email in Monica\'s Gmail as a draft. Nothing is sent yet.' },
+          { n: 4, text: 'Monica opens Gmail on her phone or computer, finds the draft, and sends it herself when she\'s ready.' },
+        ]}
+        tips={[
+          { text: 'You must be signed in with Google for "Send to Gmail Drafts" to work.' },
+          { text: 'Drafts stay here until you approve or delete them — they won\'t disappear on their own.' },
+        ]}
+      />
 
       {!session && (
         <div
