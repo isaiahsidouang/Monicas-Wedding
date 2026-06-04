@@ -103,25 +103,6 @@ export default function ScanPage() {
       return 0
     })
 
-  if (!session) {
-    return (
-      <div className="max-w-2xl mx-auto px-6 py-20 flex flex-col items-center gap-4 text-center">
-        <Mail size={40} style={{ color: 'var(--accent)' }} />
-        <h1 className="text-xl font-semibold">Sign in to scan Gmail</h1>
-        <p style={{ color: 'var(--text-muted)' }}>
-          Connect Monica&apos;s Google account to read venue & vendor emails.
-        </p>
-        <button
-          onClick={() => signIn('google')}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium mt-2"
-          style={{ background: 'var(--accent)', color: '#0c0a08' }}
-        >
-          <LogIn size={16} />
-          Sign in with Google
-        </button>
-      </div>
-    )
-  }
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6">
@@ -139,15 +120,26 @@ export default function ScanPage() {
       {/* Scan button */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={handleScan}
-            disabled={scanning}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-85 disabled:opacity-50"
-            style={{ background: 'var(--accent)', color: '#0c0a08' }}
-          >
-            <RefreshCw size={15} className={scanning ? 'animate-spin' : ''} />
-            {scanning ? 'Scanning & Analyzing…' : 'Scan Inbox'}
-          </button>
+          {session ? (
+            <button
+              onClick={handleScan}
+              disabled={scanning}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-85 disabled:opacity-50"
+              style={{ background: 'var(--accent)', color: '#0c0a08' }}
+            >
+              <RefreshCw size={15} className={scanning ? 'animate-spin' : ''} />
+              {scanning ? 'Scanning & Analyzing…' : 'Scan Inbox'}
+            </button>
+          ) : (
+            <button
+              onClick={() => signIn('google')}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium"
+              style={{ background: 'var(--accent)', color: '#0c0a08' }}
+            >
+              <LogIn size={16} />
+              Sign in with Google to Scan
+            </button>
+          )}
           <button
             onClick={handleTestScan}
             disabled={scanning}
@@ -212,7 +204,7 @@ export default function ScanPage() {
       {/* Results */}
       {sorted.length === 0 && !scanning && (
         <div className="text-center py-16" style={{ color: 'var(--text-muted)' }}>
-          {venues.length === 0 ? 'Click "Scan Inbox" to get started.' : 'No results for this filter.'}
+          {venues.length === 0 ? 'Sign in and click "Scan Inbox", or try "Test Mode" to run a sample scan without Gmail.' : 'No results for this filter.'}
         </div>
       )}
 
