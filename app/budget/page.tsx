@@ -40,6 +40,11 @@ export default function BudgetPage() {
   const [newItem, setNewItem] = useState({ category: '', description: '', estimated: 0, actual: 0, paid: 0, vendor: '', notes: '' })
 
   useEffect(() => {
+    // v2: wipe the old auto-seeded $198k and start fresh
+    if (localStorage.getItem('mw_budget_version') !== 'v2') {
+      localStorage.removeItem('mw_budget')
+      localStorage.setItem('mw_budget_version', 'v2')
+    }
     const stored = localStorage.getItem('mw_budget')
     if (stored) {
       setItems(JSON.parse(stored))

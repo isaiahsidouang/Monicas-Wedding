@@ -35,6 +35,11 @@ export default function Dashboard() {
   const [contracts, setContracts] = useState<ContractRecord[]>([])
 
   useEffect(() => {
+    // v2 migration: clear old auto-seeded budget data so it shows $0
+    if (localStorage.getItem('mw_budget_version') !== 'v2') {
+      localStorage.removeItem('mw_budget')
+      localStorage.setItem('mw_budget_version', 'v2')
+    }
     const load = (key: string) => { const v = localStorage.getItem(key); return v ? JSON.parse(v) : [] }
     setVenues(load('mw_venues'))
     setDrafts(load('mw_drafts'))
