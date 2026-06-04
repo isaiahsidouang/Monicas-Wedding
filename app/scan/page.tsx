@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession, signIn } from 'next-auth/react'
-import { Mail, RefreshCw, LogIn, SortAsc } from 'lucide-react'
+import { Mail, RefreshCw, LogIn, SortAsc, FlaskConical } from 'lucide-react'
 import VenueCard from '@/components/VenueCard'
 import type { VenueRecord, DraftEmail } from '@/types'
 
@@ -27,25 +27,29 @@ export default function ScanPage() {
     localStorage.setItem('mw_venues', JSON.stringify(updated))
   }
 
-  async function handleScan() {
+  async function runScan(url: string) {
     setScanning(true)
     setError('')
     try {
-      const res = await fetch('/api/gmail/scan')
+      const res = await fetch(url)
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || 'Scan failed')
       }
-      const { venues: newVenues, scanned } = await res.json()
+      const { venues: newVenues, scanned, testMode } = await res.json()
       setScannedCount(scanned)
       const merged = mergeVenues(venues, newVenues)
       persist(merged)
+      if (testMode) setError('') // clear any prior error; test succeeded
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unknown error')
     } finally {
       setScanning(false)
     }
   }
+
+  function handleScan()     { runScan('/api/gmail/scan') }
+  function handleTestScan() { runScan('/api/gmail/scan-test') }
 
   function mergeVenues(existing: VenueRecord[], fresh: VenueRecord[]): VenueRecord[] {
     const map = new Map(existing.map((v) => [v.id, v]))
@@ -134,15 +138,27 @@ export default function ScanPage() {
 
       {/* Scan button */}
       <div className="flex flex-col gap-3">
-        <button
-          onClick={handleScan}
-          disabled={scanning}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium w-fit transition-opacity hover:opacity-85 disabled:opacity-50"
-          style={{ background: 'var(--accent)', color: '#0c0a08' }}
-        >
-          <RefreshCw size={15} className={scanning ? 'animate-spin' : ''} />
-          {scanning ? 'Scanning & Analyzing…' : 'Scan Inbox'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleScan}
+            disabled={scanning}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-85 disabled:opacity-50"
+            style={{ background: 'var(--accent)', color: '#0c0a08' }}
+          >
+            <RefreshCw size={15} className={scanning ? 'animate-spin' : ''} />
+            {scanning ? 'Scanning & Analyzing…' : 'Scan Inbox'}
+          </button>
+          <button
+            onClick={handleTestScan}
+            disabled={scanning}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-85 disabled:opacity-50"
+            style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+            title="Run analysis on 6 sample venue emails — no Gmail required"
+          >
+            <FlaskConical size={15} />
+            Test Mode
+          </button>
+        </div>
 
         {scannedCount > 0 && !scanning && (
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>

@@ -31,8 +31,10 @@ interface RawEmail {
   body: string
 }
 
-export async function analyzeEmails(emails: RawEmail[]): Promise<VenueRecord[]> {
-  const prompt = `You are helping Monica plan her wedding. Analyze these emails and extract venue/vendor information.
+const BATCH_SIZE = 10 // emails per Claude call — keeps prompts manageable
+
+function buildAnalysisPrompt(emails: RawEmail[]): string {
+  return `You are helping Monica plan her wedding. Analyze these emails and extract venue/vendor information.
 
 Monica's requirements:
 - Guest count: ~${weddingProfile.guestCount}
@@ -41,77 +43,113 @@ Monica's requirements:
 - Preferred brands: ${weddingProfile.preferredBrands.join(', ')}
 - US dates: ${weddingProfile.usDates.join('; ')}
 - Caribbean/PR dates: ${weddingProfile.caribbeanDates.join('; ')}
-- NO venues in Mexico, no 3-star or lower
-- Caribbean venues must be oceanfront
+- NO venues in Mexico, no 3-star or lower, Caribbean venues must be oceanfront
 
-For each email, extract and return a JSON array of venue/vendor records. Each record should have:
+For each email that is relevant to wedding venue/vendor planning, return one JSON object with:
+- emailIndex: the email number this record came from (1-based, matching "Email N" below)
 - name: venue or vendor name
 - type: "venue" | "vendor" | "unknown"
-- contact.email: sender email
-- contact.name: sender name if visible
-- contact.phone: phone number if mentioned
+- contact: { email, name, phone } — from sender info
 - location: city, state/country
-- pricing: any pricing mentioned
-- capacity: max guests if mentioned
-- availability: any dates mentioned
-- amenities: array of key features/amenities mentioned
-- pros: positive aspects
-- cons: concerns or negatives
+- venueRentalFee: rental fee if mentioned
+- capacitySeated: seated capacity if mentioned
+- capacityReception: reception capacity if mentioned
+- availableDates: available dates mentioned
+- unavailableDates: unavailable dates mentioned
+- amenities: array of key features
+- pros: array of positives
+- cons: array of concerns
 - notes: any other relevant info
-- priorityScore: 1-10 based on fit with Monica's requirements (10 = perfect match)
-- isOceanfront: true/false if relevant
+- priorityScore: 1-10 fit with Monica's requirements
+- isOceanfront: boolean
 - tier: luxury tier estimate
 
-Emails to analyze:
+Skip emails that are clearly not venue/vendor related (newsletters, spam, receipts).
+
+Emails:
 ${emails.map((e, i) => `--- Email ${i + 1} ---
 Subject: ${e.subject}
 From: ${e.from}
 Date: ${e.date}
-Body: ${e.body.slice(0, 2000)}`).join('\n\n')}
+Body: ${e.body.slice(0, 1500)}`).join('\n\n')}
 
-Return ONLY a valid JSON array of venue records. No markdown, no explanation.`
+Return ONLY a valid JSON array. No markdown, no explanation.`
+}
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 4000,
-    messages: [{ role: 'user', content: prompt }],
-  })
+export async function analyzeEmails(emails: RawEmail[]): Promise<VenueRecord[]> {
+  if (emails.length === 0) return []
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : ''
+  // Build a lookup map so records can reference their source email by index
+  const emailByIndex = new Map(emails.map((e, i) => [i + 1, e]))
 
-  try {
-    const parsed = JSON.parse(text)
-    return parsed.map((v: Partial<VenueRecord>, i: number) => {
-      const location = v.location || ''
-      return {
-        id: emails[i]?.id || crypto.randomUUID(),
-        name: v.name || 'Unknown',
-        type: v.type || 'unknown',
-        region: inferRegion(location),
-        contact: v.contact || { email: '' },
-        location,
-        venueRentalFee: v.venueRentalFee,
-        capacitySeated: v.capacitySeated,
-        capacityReception: v.capacityReception,
-        availableDates: v.availableDates,
-        amenities: v.amenities || [],
-        pros: v.pros || [],
-        cons: v.cons || [],
-        notes: v.notes,
-        priorityScore: v.priorityScore || 5,
-        priority: v.priority || '',
-        status: 'new',
-        emailSubject: emails[i]?.subject,
-        emailDate: emails[i]?.date,
-        gmailThreadId: emails[i]?.threadId,
-        isOceanfront: v.isOceanfront,
-        tier: v.tier,
-        analyzedAt: new Date().toISOString(),
-      }
-    })
-  } catch {
-    return []
+  // Process in batches to avoid context/token limits
+  const batches: RawEmail[][] = []
+  for (let i = 0; i < emails.length; i += BATCH_SIZE) {
+    batches.push(emails.slice(i, i + BATCH_SIZE))
   }
+
+  const allRecords: VenueRecord[] = []
+  let batchOffset = 0
+
+  for (const batch of batches) {
+    // Reindex the batch so prompts always start at Email 1
+    const reindexed = batch.map((e, i) => ({ ...e, _batchIndex: i + 1 }))
+    const prompt = buildAnalysisPrompt(reindexed)
+
+    try {
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }],
+      })
+
+      const text = response.content[0].type === 'text' ? response.content[0].text : ''
+      // Strip any accidental markdown fences
+      const clean = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim()
+      const parsed: Array<Record<string, unknown>> = JSON.parse(clean)
+
+      for (const v of parsed) {
+        const batchIdx   = typeof v.emailIndex === 'number' ? v.emailIndex : 1
+        const globalIdx  = batchOffset + batchIdx
+        const sourceEmail = emailByIndex.get(globalIdx)
+        const location   = typeof v.location === 'string' ? v.location : ''
+
+        allRecords.push({
+          id:                sourceEmail?.id || crypto.randomUUID(),
+          name:              typeof v.name === 'string' ? v.name : 'Unknown',
+          type:              (v.type as VenueRecord['type']) || 'unknown',
+          region:            inferRegion(location),
+          contact:           (v.contact as VenueRecord['contact']) || { email: '' },
+          location,
+          venueRentalFee:    typeof v.venueRentalFee === 'string' ? v.venueRentalFee : undefined,
+          capacitySeated:    typeof v.capacitySeated === 'string' ? v.capacitySeated : undefined,
+          capacityReception: typeof v.capacityReception === 'string' ? v.capacityReception : undefined,
+          availableDates:    typeof v.availableDates === 'string' ? v.availableDates : undefined,
+          unavailableDates:  typeof v.unavailableDates === 'string' ? v.unavailableDates : undefined,
+          amenities:         Array.isArray(v.amenities) ? v.amenities as string[] : [],
+          pros:              Array.isArray(v.pros) ? v.pros as string[] : [],
+          cons:              Array.isArray(v.cons) ? v.cons as string[] : [],
+          notes:             typeof v.notes === 'string' ? v.notes : undefined,
+          priorityScore:     typeof v.priorityScore === 'number' ? v.priorityScore : 5,
+          priority:          '',
+          status:            'new',
+          emailSubject:      sourceEmail?.subject,
+          emailDate:         sourceEmail?.date,
+          gmailThreadId:     sourceEmail?.threadId,
+          isOceanfront:      typeof v.isOceanfront === 'boolean' ? v.isOceanfront : undefined,
+          tier:              typeof v.tier === 'string' ? v.tier : undefined,
+          analyzedAt:        new Date().toISOString(),
+        })
+      }
+    } catch (err) {
+      console.error(`analyzeEmails batch ${batchOffset / BATCH_SIZE + 1} failed:`, err)
+      // Continue with remaining batches rather than aborting everything
+    }
+
+    batchOffset += batch.length
+  }
+
+  return allRecords
 }
 
 export async function draftInquiryEmail(venue: {
