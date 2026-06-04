@@ -2,7 +2,7 @@
 
 import { useSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { Mail, Search, FileText, Download, LogIn, Heart, CheckSquare, DollarSign, Users, FileCheck, Clock, Upload } from 'lucide-react'
+import { Mail, Search, FileText, Download, LogIn, Heart, CheckSquare, DollarSign, Users, FileCheck, Clock, Upload, Table2 } from 'lucide-react'
 import HelpBanner from '@/components/HelpBanner'
 import { useEffect, useState } from 'react'
 import type { VenueRecord, DraftEmail, ChecklistItem, BudgetItem, VendorRecord, ContractRecord } from '@/types'
@@ -66,17 +66,17 @@ export default function Dashboard() {
       <HelpBanner
         storageKey="home"
         title="How to use Monica's Wedding Planner"
-        intro="Follow these steps to get the most out of the app. You only need to set up once — everything saves automatically."
+        intro="Isaiah has already loaded your existing venue spreadsheet — you're all set! Here's how to use the app going forward."
         steps={[
-          { n: 1, text: 'Import your existing spreadsheet using the "Import Spreadsheet" button below — it will pull in all your venues, contacts, and notes.' },
-          { n: 2, text: 'Sign in with Google to connect Monica\'s Gmail account. This unlocks inbox scanning and the ability to save email drafts.' },
+          { n: 1, text: 'Your 41 venues are already here! Click "My Venues" in the nav to browse all your tracked venues — contacts, status, pricing, availability, and notes are all there.' },
+          { n: 2, text: 'Sign in with Google to connect your Gmail. This unlocks inbox scanning (to pull in new venue emails) and AI-drafted inquiry emails.' },
           { n: 3, text: 'Go to Scan Inbox to analyze the last year of venue/vendor emails. AI extracts contacts, pricing, availability, and scores each one.' },
           { n: 4, text: 'Go to Find Venues to browse 19 pre-loaded luxury venues. Select any you haven\'t contacted and generate AI inquiry emails in one click.' },
-          { n: 5, text: 'Check Drafts to review every AI-written email before it goes anywhere. Edit, then send to Gmail Drafts — Monica sends from her phone.' },
+          { n: 5, text: 'Check Drafts to review every AI-written email before it goes anywhere. Edit, then send to Gmail Drafts — you send from your phone.' },
           { n: 6, text: 'Use Checklist, Budget, Vendors, Contracts, and Day-Of to track everything else as the wedding gets closer.' },
         ]}
         tips={[
-          { text: 'Export to Excel any time to download a color-coded spreadsheet matching Monica\'s existing format.' },
+          { text: 'Export to Excel anytime to download an updated spreadsheet — it builds on your existing data as you add venues and track progress.' },
           { text: 'All data is saved in the browser — no account needed beyond the Google sign-in for Gmail.' },
         ]}
       />
@@ -140,6 +140,7 @@ export default function Dashboard() {
       <div>
         <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-muted)' }}>PLANNING TOOLS</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <QuickAction href="/my-venues" icon={Table2} title="My Venues" desc={venues.length > 0 ? `View all ${venues.length} tracked venues` : 'Browse your venue data'} />
           <QuickAction href="/checklist" icon={CheckSquare} title="Checklist" desc={`${checklistDone}/${checklistTotal} tasks complete`} />
           <QuickAction href="/budget" icon={DollarSign} title="Budget" desc={totalBudget > 0 ? `$${(totalBudget / 1000).toFixed(0)}k estimated total` : 'Track all wedding costs'} />
           <QuickAction href="/vendors" icon={Users} title="Vendors" desc={vendors.length > 0 ? `${bookedVendors}/${vendors.length} booked` : 'Photographer, florist & more'} />
@@ -183,6 +184,7 @@ function QuickAction({ href, icon: Icon, title, desc }: { href: string; icon: ty
 
 function ImportAction({ onImport }: { onImport: (venues: VenueRecord[]) => void }) {
   const [loading, setLoading] = useState(false)
+  const [showUpload, setShowUpload] = useState(false)
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -206,15 +208,33 @@ function ImportAction({ onImport }: { onImport: (venues: VenueRecord[]) => void 
     }
     setLoading(false)
     e.target.value = ''
+    setShowUpload(false)
+  }
+
+  if (showUpload) {
+    return (
+      <label className="rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-all hover:shadow-sm" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+        <Upload size={16} style={{ color: 'var(--accent)' }} />
+        <div className="font-medium text-sm">Upload New File</div>
+        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{loading ? 'Importing…' : 'Select your .xlsx file'}</div>
+        <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} disabled={loading} />
+      </label>
+    )
   }
 
   return (
-    <label className="rounded-xl p-4 flex flex-col gap-2 cursor-pointer transition-all hover:shadow-sm" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+    <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
       <Upload size={16} style={{ color: 'var(--accent)' }} />
-      <div className="font-medium text-sm">Import Spreadsheet</div>
-      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{loading ? 'Importing…' : 'Upload existing Excel file'}</div>
-      <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} disabled={loading} />
-    </label>
+      <div className="font-medium text-sm">Your Data Is Loaded</div>
+      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Isaiah already imported your venue spreadsheet — no upload needed.</div>
+      <button
+        onClick={() => setShowUpload(true)}
+        className="text-xs mt-1 text-left underline"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        Re-import a new file
+      </button>
+    </div>
   )
 }
 

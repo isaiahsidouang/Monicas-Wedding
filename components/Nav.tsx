@@ -3,17 +3,18 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { Heart, Mail, Search, FileText, CheckSquare, DollarSign, Users, FileCheck, Clock, LogIn, LogOut } from 'lucide-react'
+import { Heart, Mail, Search, FileText, CheckSquare, DollarSign, Users, FileCheck, Clock, LogIn, LogOut, Table2 } from 'lucide-react'
 
 const links = [
   { href: '/', label: 'Home', icon: Heart },
+  { href: '/my-venues', label: 'My Venues', icon: Table2 },
   { href: '/checklist', label: 'Checklist', icon: CheckSquare },
   { href: '/budget', label: 'Budget', icon: DollarSign },
   { href: '/vendors', label: 'Vendors', icon: Users },
   { href: '/contracts', label: 'Contracts', icon: FileCheck },
   { href: '/timeline', label: 'Day-Of', icon: Clock },
   { href: '/scan', label: 'Scan Inbox', icon: Mail },
-  { href: '/venues', label: 'Venues', icon: Search },
+  { href: '/venues', label: 'Find Venues', icon: Search },
   { href: '/drafts', label: 'Drafts', icon: FileText },
 ]
 
