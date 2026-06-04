@@ -3,12 +3,17 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signIn, signOut } from 'next-auth/react'
-import { Heart, Mail, Search, FileText, Download, LogIn, LogOut } from 'lucide-react'
+import { Heart, Mail, Search, FileText, CheckSquare, DollarSign, Users, FileCheck, Clock, LogIn, LogOut } from 'lucide-react'
 
 const links = [
-  { href: '/', label: 'Dashboard', icon: Heart },
+  { href: '/', label: 'Home', icon: Heart },
+  { href: '/checklist', label: 'Checklist', icon: CheckSquare },
+  { href: '/budget', label: 'Budget', icon: DollarSign },
+  { href: '/vendors', label: 'Vendors', icon: Users },
+  { href: '/contracts', label: 'Contracts', icon: FileCheck },
+  { href: '/timeline', label: 'Day-Of', icon: Clock },
   { href: '/scan', label: 'Scan Inbox', icon: Mail },
-  { href: '/venues', label: 'Find Venues', icon: Search },
+  { href: '/venues', label: 'Venues', icon: Search },
   { href: '/drafts', label: 'Drafts', icon: FileText },
 ]
 
@@ -18,59 +23,59 @@ export default function Nav() {
 
   return (
     <nav
-      className="sticky top-0 z-50 border-b flex items-center justify-between px-6 py-3"
-      style={{ background: 'var(--card)', borderColor: 'var(--border)' }}
+      className="sticky top-0 z-50 border-b"
+      style={{ background: 'var(--nav-bg)', borderColor: 'var(--border)' }}
     >
-      <div className="flex items-center gap-8">
-        <span className="font-semibold tracking-wide text-sm" style={{ color: 'var(--accent)' }}>
+      <div className="flex items-center justify-between px-6 py-3 gap-4">
+        {/* Brand */}
+        <span className="font-semibold text-sm shrink-0 flex items-center gap-1.5" style={{ color: 'var(--accent)' }}>
           💍 Monica&apos;s Wedding
         </span>
-        <div className="flex items-center gap-1">
+
+        {/* Links — horizontally scrollable */}
+        <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide flex-1 min-w-0">
           {links.map(({ href, label, icon: Icon }) => {
             const active = pathname === href
             return (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors shrink-0"
                 style={{
-                  background: active ? 'rgba(201,169,110,0.12)' : 'transparent',
+                  background: active ? 'var(--accent-light)' : 'transparent',
                   color: active ? 'var(--accent)' : 'var(--text-muted)',
+                  fontWeight: active ? 600 : 400,
                 }}
               >
-                <Icon size={14} />
+                <Icon size={13} />
                 {label}
               </Link>
             )
           })}
         </div>
-      </div>
 
-      <div className="flex items-center gap-3">
-        {status === 'loading' ? null : session ? (
-          <div className="flex items-center gap-3">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {session.user?.email}
-            </span>
+        {/* Auth */}
+        <div className="shrink-0">
+          {status === 'loading' ? null : session ? (
             <button
               onClick={() => signOut()}
-              className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg transition-colors"
-              style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+              style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}
             >
-              <LogOut size={14} />
+              <LogOut size={12} />
               Sign out
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => signIn('google')}
-            className="flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-85"
-            style={{ background: 'var(--accent)', color: '#0c0a08' }}
-          >
-            <LogIn size={14} />
-            Sign in with Google
-          </button>
-        )}
+          ) : (
+            <button
+              onClick={() => signIn('google')}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-semibold"
+              style={{ background: 'var(--accent)', color: '#fff' }}
+            >
+              <LogIn size={12} />
+              Sign in
+            </button>
+          )}
+        </div>
       </div>
     </nav>
   )

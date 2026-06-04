@@ -1,22 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --accent: #c9a96e;
-  --accent-light: #e8cfa0;
-  --bg: #0c0a08;
-  --card: #141210;
-  --border: #2a2520;
-  --text-muted: #8a7f74;
+  --accent: #c05470;
+  --accent-hover: #a8435e;
+  --accent-light: #fce9ed;
+  --bg: #fdf8f9;
+  --card: #ffffff;
+  --border: #f0dde1;
+  --text: #1a0a10;
+  --text-muted: #9b7880;
+  --nav-bg: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--bg);
-  --color-foreground: #f0ebe4;
+  --color-foreground: var(--text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--bg);
-  color: #f0ebe4;
+  color: var(--text);
+}
+
+input, textarea, select {
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  font-size: 0.875rem;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }

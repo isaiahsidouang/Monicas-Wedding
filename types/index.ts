@@ -78,6 +78,92 @@ export interface WeddingProfile {
   preferredBrands: string[]
 }
 
+// ─── CHECKLIST ────────────────────────────────────────────────────────────────
+export interface ChecklistItem {
+  id: string
+  category: string
+  task: string
+  timeframe: string // e.g. "12 months before"
+  dueDate?: string  // ISO date string
+  completed: boolean
+  notes?: string
+  priority: 'high' | 'medium' | 'low'
+}
+
+// ─── BUDGET ───────────────────────────────────────────────────────────────────
+export interface BudgetItem {
+  id: string
+  category: string
+  description: string
+  estimated: number
+  actual: number
+  paid: number
+  vendor?: string
+  notes?: string
+  dueDate?: string
+}
+
+// ─── VENDOR ───────────────────────────────────────────────────────────────────
+export type VendorCategory =
+  | 'Photographer'
+  | 'Videographer'
+  | 'Florist'
+  | 'Band / DJ'
+  | 'Hair & Makeup'
+  | 'Officiant'
+  | 'Catering'
+  | 'Cake / Desserts'
+  | 'Transportation'
+  | 'Invitations'
+  | 'Rentals'
+  | 'Other'
+
+export interface VendorRecord {
+  id: string
+  category: VendorCategory
+  name: string
+  contact: {
+    name?: string
+    email?: string
+    phone?: string
+    website?: string
+  }
+  status: 'researching' | 'contacted' | 'proposal-received' | 'booked' | 'declined'
+  price?: number
+  notes?: string
+  priority: 'High' | 'Medium' | 'Low' | ''
+  createdAt: string
+}
+
+// ─── CONTRACTS ────────────────────────────────────────────────────────────────
+export interface ContractRecord {
+  id: string
+  vendorName: string
+  category: string
+  totalAmount: number
+  depositAmount: number
+  depositPaid: boolean
+  depositPaidDate?: string
+  depositDueDate?: string
+  remainingBalance: number
+  balanceDueDate?: string
+  contractSigned: boolean
+  contractSignedDate?: string
+  notes?: string
+  createdAt: string
+}
+
+// ─── DAY-OF TIMELINE ──────────────────────────────────────────────────────────
+export interface TimelineItem {
+  id: string
+  time: string // "HH:MM" 24hr
+  label: string
+  location?: string
+  responsible?: string
+  notes?: string
+  category: 'prep' | 'ceremony' | 'photos' | 'reception' | 'other'
+}
+
 declare module 'next-auth' {
   interface Session {
     accessToken?: string
