@@ -32,11 +32,11 @@ function truncate(str: string, max: number) {
 function Row({ icon, label, value, maxChars = 80 }: { icon: React.ReactNode; label: string; value: string; maxChars?: number }) {
   return (
     <div className="flex gap-2 text-sm">
-      <div className="flex items-center gap-1.5 shrink-0" style={{ color: 'var(--text-muted)', minWidth: 80 }}>
+      <div className="flex items-center gap-1.5 shrink-0" style={{ color: 'var(--accent)', minWidth: 80 }}>
         {icon}
         <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
       </div>
-      <span style={{ color: '#e8e0d8' }}>{truncate(value, maxChars)}</span>
+      <span style={{ color: 'var(--text)' }}>{truncate(value, maxChars)}</span>
     </div>
   )
 }
@@ -166,7 +166,7 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Contact</span>
               {venue.contact.name && (
-                <span className="text-sm" style={{ color: '#e8e0d8' }}>{venue.contact.name}{venue.contact.title ? ` — ${venue.contact.title}` : ''}</span>
+                <span className="text-sm" style={{ color: 'var(--text)' }}>{venue.contact.name}{venue.contact.title ? ` — ${venue.contact.title}` : ''}</span>
               )}
               {venue.contact.email && (
                 <a href={`mailto:${venue.contact.email}`} className="flex items-center gap-1.5 text-sm hover:underline" style={{ color: 'var(--accent)' }}>
