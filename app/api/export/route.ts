@@ -1,4 +1,3 @@
-import { auth } from '@/auth'
 import * as XLSX from 'xlsx'
 import type { VenueRecord } from '@/types'
 
@@ -66,11 +65,6 @@ function addSheet(wb: XLSX.WorkBook, name: string, rows: ReturnType<typeof toRow
 }
 
 export async function POST(req: Request) {
-  const session = await auth()
-  if (!session?.user) {
-    return Response.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
   const { venues }: { venues: VenueRecord[] } = await req.json()
 
   const wb = XLSX.utils.book_new()

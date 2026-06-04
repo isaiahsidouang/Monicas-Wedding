@@ -184,16 +184,22 @@ function ImportAction({ onImport }: { onImport: (venues: VenueRecord[]) => void 
 
 function ExportAction({ venues }: { venues: VenueRecord[] }) {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleExport() {
     if (venues.length === 0) return
     setLoading(true)
-    const res = await fetch('/api/export', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ venues }),
-    })
-    if (res.ok) {
+    setError('')
+    try {
+      const res = await fetch('/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ venues }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || `Export failed (${res.status})`)
+      }
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -201,8 +207,11 @@ function ExportAction({ venues }: { venues: VenueRecord[] }) {
       a.download = 'monica-wedding-venues.xlsx'
       a.click()
       URL.revokeObjectURL(url)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Export failed')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -212,10 +221,10 @@ function ExportAction({ venues }: { venues: VenueRecord[] }) {
       className="rounded-xl p-4 flex flex-col gap-2 text-left transition-all hover:shadow-sm disabled:opacity-40"
       style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
     >
-      <Download size={16} style={{ color: 'var(--accent)' }} />
+      <Download size={16} style={{ color: error ? '#f87171' : 'var(--accent)' }} />
       <div className="font-medium text-sm">Export to Excel</div>
-      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-        {loading ? 'Exporting…' : venues.length > 0 ? `Download ${venues.length} venues` : 'Import data first'}
+      <div className="text-xs" style={{ color: error ? '#f87171' : 'var(--text-muted)' }}>
+        {error || (loading ? 'Exporting…' : venues.length > 0 ? `Download ${venues.length} venues` : 'Import data first')}
       </div>
     </button>
   )
