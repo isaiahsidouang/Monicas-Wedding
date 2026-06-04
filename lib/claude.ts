@@ -2,6 +2,24 @@ import Anthropic from '@anthropic-ai/sdk'
 import { weddingProfile } from './monica'
 import type { VenueRecord } from '@/types'
 
+function inferRegion(location: string): VenueRecord['region'] {
+  const loc = location.toLowerCase()
+  if (loc.includes('california') || loc.includes(', ca') || loc.includes('san francisco') ||
+      loc.includes('los angeles') || loc.includes('dana point') || loc.includes('half moon bay') ||
+      loc.includes('rancho mirage') || loc.includes('laguna'))                              return 'california'
+  if (loc.includes('chicago') || loc.includes('illinois') || loc.includes(', il'))         return 'illinois'
+  if (loc.includes('miami') || loc.includes('florida') || loc.includes(', fl') ||
+      loc.includes('fort lauderdale') || loc.includes('bal harbour') ||
+      loc.includes('coconut grove') || loc.includes('boca raton') ||
+      loc.includes('palm beach') && !loc.includes('aruba'))                                 return 'miami'
+  if (loc.includes('puerto rico') || loc.includes('san juan') || loc.includes('dorado'))   return 'puerto-rico'
+  if (loc.includes('caribbean') || loc.includes('cayman') || loc.includes('aruba') ||
+      loc.includes('bermuda') || loc.includes('bahamas') || loc.includes('turks') ||
+      loc.includes('virgin islands') || loc.includes('antigua') ||
+      loc.includes('barbados') || loc.includes('saint') || loc.includes('st.'))            return 'caribbean'
+  return 'other'
+}
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 interface RawEmail {
@@ -63,30 +81,34 @@ Return ONLY a valid JSON array of venue records. No markdown, no explanation.`
 
   try {
     const parsed = JSON.parse(text)
-    return parsed.map((v: Partial<VenueRecord>, i: number) => ({
-      id: emails[i]?.id || crypto.randomUUID(),
-      name: v.name || 'Unknown',
-      type: v.type || 'unknown',
-      contact: v.contact || { email: '' },
-      location: v.location || '',
-      venueRentalFee: v.venueRentalFee,
-      capacitySeated: v.capacitySeated,
-      capacityReception: v.capacityReception,
-      availableDates: v.availableDates,
-      amenities: v.amenities || [],
-      pros: v.pros || [],
-      cons: v.cons || [],
-      notes: v.notes,
-      priorityScore: v.priorityScore || 5,
-      priority: v.priority || '',
-      status: 'new',
-      emailSubject: emails[i]?.subject,
-      emailDate: emails[i]?.date,
-      gmailThreadId: emails[i]?.threadId,
-      isOceanfront: v.isOceanfront,
-      tier: v.tier,
-      analyzedAt: new Date().toISOString(),
-    }))
+    return parsed.map((v: Partial<VenueRecord>, i: number) => {
+      const location = v.location || ''
+      return {
+        id: emails[i]?.id || crypto.randomUUID(),
+        name: v.name || 'Unknown',
+        type: v.type || 'unknown',
+        region: inferRegion(location),
+        contact: v.contact || { email: '' },
+        location,
+        venueRentalFee: v.venueRentalFee,
+        capacitySeated: v.capacitySeated,
+        capacityReception: v.capacityReception,
+        availableDates: v.availableDates,
+        amenities: v.amenities || [],
+        pros: v.pros || [],
+        cons: v.cons || [],
+        notes: v.notes,
+        priorityScore: v.priorityScore || 5,
+        priority: v.priority || '',
+        status: 'new',
+        emailSubject: emails[i]?.subject,
+        emailDate: emails[i]?.date,
+        gmailThreadId: emails[i]?.threadId,
+        isOceanfront: v.isOceanfront,
+        tier: v.tier,
+        analyzedAt: new Date().toISOString(),
+      }
+    })
   } catch {
     return []
   }
