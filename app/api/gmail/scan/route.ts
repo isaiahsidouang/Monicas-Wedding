@@ -59,7 +59,9 @@ export async function GET() {
       })
     )
 
-    const venues = await analyzeEmails(rawEmails)
+    // Skip emails with no extractable body — Claude can't analyze them
+    const analyzable = rawEmails.filter((e) => e.body.trim().length > 50)
+    const venues = await analyzeEmails(analyzable)
     return Response.json({ venues, scanned: rawEmails.length })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to scan Gmail'

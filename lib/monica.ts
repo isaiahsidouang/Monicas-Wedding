@@ -7,7 +7,7 @@ export const weddingProfile: WeddingProfile = {
   usDates: [
     'Any Saturday or Sunday in October 2026',
     'Any Saturday or Sunday in November 2026',
-    'Any Saturday or Sunday in January 2026',
+    'Any Saturday or Sunday in January 2027',
   ],
   caribbeanDates: [
     'Any Saturday or Sunday in November 2027',

@@ -8,11 +8,21 @@ import { useEffect, useState } from 'react'
 import type { VenueRecord, DraftEmail, ChecklistItem, BudgetItem, VendorRecord, ContractRecord } from '@/types'
 
 function mergeVenues(existing: VenueRecord[], fresh: VenueRecord[]): VenueRecord[] {
-  const map = new Map(existing.map((v) => [v.name.toLowerCase(), v]))
+  // Primary key: id. Fallback dedup by lowercase name to catch same venue from different sources.
+  const byId   = new Map(existing.map((v) => [v.id, v]))
+  const byName = new Map(existing.map((v) => [v.name.toLowerCase(), v.id]))
   for (const v of fresh) {
-    if (!map.has(v.name.toLowerCase())) map.set(v.name.toLowerCase(), v)
+    if (byId.has(v.id)) {
+      byId.set(v.id, { ...byId.get(v.id)!, ...v }) // merge, fresh wins
+    } else if (byName.has(v.name.toLowerCase())) {
+      const existingId = byName.get(v.name.toLowerCase())!
+      byId.set(existingId, { ...byId.get(existingId)!, ...v })
+    } else {
+      byId.set(v.id, v)
+      byName.set(v.name.toLowerCase(), v.id)
+    }
   }
-  return Array.from(map.values())
+  return Array.from(byId.values())
 }
 
 export default function Dashboard() {
@@ -183,10 +193,16 @@ function ImportAction({ onImport }: { onImport: (venues: VenueRecord[]) => void 
     const res = await fetch('/api/import', { method: 'POST', body: fd })
     if (res.ok) {
       const { venues, count } = await res.json()
-      onImport(venues)
-      alert(`Imported ${count} venues from your spreadsheet!`)
+      if (count === 0) {
+        alert("No venues found. Make sure the file has columns like \"Venue / Vendor Name\" and that rows have data.")
+      } else {
+        onImport(venues)
+        alert(`Imported ${count} venues from your spreadsheet!`)
+      }
+    } else if (res.status >= 500) {
+      alert('Server error during import. Try again — if it keeps failing, check that the file is a .xlsx or .xls Excel file.')
     } else {
-      alert("Import failed — make sure it's the correct Excel file.")
+      alert("Import failed — make sure it's the correct Excel file with the expected column headers.")
     }
     setLoading(false)
     e.target.value = ''

@@ -69,6 +69,10 @@ export default function ContractsPage() {
   const totalOwed = contracts.reduce((s, c) => s + c.remainingBalance, 0)
   const totalPaid = contracts.reduce((s, c) => s + (c.depositPaid ? c.depositAmount : 0), 0)
   const signed = contracts.filter((c) => c.contractSigned).length
+  const overdue = contracts.filter((c) => {
+    const d = daysUntil(c.balanceDueDate)
+    return d !== null && d < 0 && !c.contractSigned
+  })
   const upcoming = contracts.filter((c) => {
     const d = daysUntil(c.balanceDueDate)
     return d !== null && d >= 0 && d <= 30
@@ -128,6 +132,24 @@ export default function ContractsPage() {
           </div>
         ))}
       </div>
+
+      {/* Overdue alerts */}
+      {overdue.length > 0 && (
+        <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: '#fff0f0', border: '1px solid #f5b0b0' }}>
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: '#c05470' }}>
+            <AlertCircle size={15} />
+            Overdue Payments
+          </div>
+          {overdue.map((c) => (
+            <div key={c.id} className="text-sm flex justify-between">
+              <span style={{ color: 'var(--text)' }}>{c.vendorName}</span>
+              <span style={{ color: '#c05470' }}>
+                {fmt(c.remainingBalance)} — was due {c.balanceDueDate}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Due soon alerts */}
       {upcoming.length > 0 && (

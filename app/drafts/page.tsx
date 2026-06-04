@@ -32,18 +32,34 @@ export default function DraftsPage() {
 
   async function sendToDrafts(draft: DraftEmail) {
     if (!session) { signIn('google'); return }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((session as any).error === 'RefreshTokenError') {
+      alert('Your Google session expired. Please sign out and sign in again.')
+      signIn('google')
+      return
+    }
 
-    const res = await fetch('/api/gmail/draft', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to: draft.to, subject: draft.subject, body: draft.body }),
-    })
+    try {
+      const res = await fetch('/api/gmail/draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: draft.to, subject: draft.subject, body: draft.body }),
+      })
 
-    if (res.ok) {
-      updateDraft(draft.id, { status: 'sent-to-drafts' })
-    } else {
-      const data = await res.json()
-      alert(`Failed to save draft: ${data.error}`)
+      if (res.ok) {
+        updateDraft(draft.id, { status: 'sent-to-drafts' })
+      } else {
+        const data = await res.json().catch(() => ({}))
+        const msg = data.error || `Server error (${res.status})`
+        if (res.status === 401) {
+          alert('Google session expired. Please sign in again.')
+          signIn('google')
+        } else {
+          alert(`Failed to save to Gmail: ${msg}`)
+        }
+      }
+    } catch {
+      alert('Network error — check your connection and try again.')
     }
   }
 

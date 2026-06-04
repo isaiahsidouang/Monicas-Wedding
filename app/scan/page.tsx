@@ -67,7 +67,7 @@ export default function ScanPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: type === 'decline' ? 'follow-up' : 'follow-up',
+        type: type === 'decline' ? 'decline' : 'follow-up',
         venue: {
           name: venue.name,
           contactEmail: venue.contact.email,
@@ -117,6 +117,19 @@ export default function ScanPage() {
           Scans Monica&apos;s Gmail for venue & vendor emails, then uses AI to extract and prioritize them.
         </p>
       </div>
+
+      {/* Session expired warning */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {session && (session as any).error === 'RefreshTokenError' && (
+        <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: '#fff0f0', border: '1px solid #f5b0b0' }}>
+          <span className="text-sm" style={{ color: '#c05470' }}>
+            Your Google session expired — scans will fail.
+          </span>
+          <button onClick={() => signIn('google')} className="text-sm font-medium underline ml-auto" style={{ color: '#c05470' }}>
+            Sign in again
+          </button>
+        </div>
+      )}
 
       {/* Help */}
       <HelpBanner

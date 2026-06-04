@@ -69,14 +69,14 @@ export default function DraftCard({ draft, onSendToDrafts, onUpdate, onRemove }:
         <div className="flex flex-col gap-2">
           <input
             className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-            style={{ background: '#1a1714', border: '1px solid var(--border)', color: '#f0ebe4' }}
+            style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)' }}
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
             placeholder="Subject"
           />
           <textarea
             className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none"
-            style={{ background: '#1a1714', border: '1px solid var(--border)', color: '#f0ebe4', minHeight: 160 }}
+            style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', minHeight: 200 }}
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />
@@ -102,8 +102,8 @@ export default function DraftCard({ draft, onSendToDrafts, onUpdate, onRemove }:
       ) : (
         <div className="flex flex-col gap-1">
           <div className="text-sm font-medium">{subject}</div>
-          <div className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-muted)' }}>
-            {body.length > 300 ? body.slice(0, 300) + '…' : body}
+          <div className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            {body}
           </div>
         </div>
       )}
