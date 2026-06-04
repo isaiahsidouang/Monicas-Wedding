@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, Users, DollarSign, Calendar, ChevronDown, ChevronUp, Mail, Phone, Waves, X } from 'lucide-react'
+import { MapPin, Users, DollarSign, Calendar, ChevronDown, ChevronUp, Mail, Phone, Waves, X, Globe, ExternalLink } from 'lucide-react'
 import { useState } from 'react'
 import type { VenueRecord } from '@/types'
 
@@ -162,7 +162,7 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
       {expanded && (
         <div className="px-4 pb-4 flex flex-col gap-4 border-t pt-3" style={{ borderColor: 'var(--border)' }}>
           {/* Contact */}
-          {(venue.contact.name || venue.contact.email || venue.contact.phone) && (
+          {(venue.contact.name || venue.contact.email || venue.contact.phone || venue.contact.website) && (
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Contact</span>
               {venue.contact.name && (
@@ -177,6 +177,17 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
                 <span className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-muted)' }}>
                   <Phone size={11} />{venue.contact.phone}
                 </span>
+              )}
+              {venue.contact.website && (
+                <a
+                  href={venue.contact.website.startsWith('http') ? venue.contact.website : `https://${venue.contact.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm hover:underline"
+                  style={{ color: 'var(--accent)' }}
+                >
+                  <Globe size={11} />{venue.contact.website.replace(/^https?:\/\//, '')}
+                </a>
               )}
             </div>
           )}
@@ -205,11 +216,27 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
             </div>
           )}
 
-          {/* Source */}
+          {/* Source email */}
           {venue.emailSubject && (
-            <p className="text-xs" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
-              From: &ldquo;{venue.emailSubject}&rdquo;{venue.emailDate ? ` · ${venue.emailDate}` : ''}
-            </p>
+            <div className="flex items-start gap-1.5 text-xs" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
+              <ExternalLink size={11} className="mt-0.5 shrink-0" />
+              <span>
+                {venue.gmailThreadId ? (
+                  <a
+                    href={`https://mail.google.com/mail/u/0/#all/${venue.gmailThreadId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                    style={{ color: 'var(--accent)' }}
+                  >
+                    {venue.emailSubject}
+                  </a>
+                ) : (
+                  <>&ldquo;{venue.emailSubject}&rdquo;</>
+                )}
+                {venue.emailDate ? ` · ${venue.emailDate}` : ''}
+              </span>
+            </div>
           )}
         </div>
       )}

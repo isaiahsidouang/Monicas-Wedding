@@ -49,7 +49,7 @@ For each email that is relevant to wedding venue/vendor planning, return EXACTLY
 - emailIndex: the email number (1-based, matching "Email N" below) — one record per email
 - name: the single primary venue or vendor name from that email
 - type: "venue" | "vendor" | "unknown"
-- contact: { email, name, phone } — from sender info
+- contact: { email, name, phone, website } — from sender info; website is the venue's URL if mentioned in the email body or signature
 - location: city and state only, e.g. "Chicago, IL" or "Miami Beach, FL" (short, no street address)
 - venueRentalFee: Saturday rate only as a short string, e.g. "$12,000" or "$18,000/Sat" — max 20 chars, no breakdowns
 - capacitySeated: maximum seated guests as a number string only, e.g. "350" or "450" — no room details
