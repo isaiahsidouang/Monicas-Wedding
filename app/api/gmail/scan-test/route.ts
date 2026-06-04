@@ -30,6 +30,7 @@ Warmly,
 Sarah Mitchell
 Director of Catering Sales
 The Ritz-Carlton, Chicago
+160 E Pearson St, Chicago, IL 60611
 312-266-1000 ext. 5512`,
   },
   {

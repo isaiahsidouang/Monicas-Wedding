@@ -45,26 +45,26 @@ Monica's requirements:
 - Caribbean/PR dates: ${weddingProfile.caribbeanDates.join('; ')}
 - NO venues in Mexico, no 3-star or lower, Caribbean venues must be oceanfront
 
-For each email that is relevant to wedding venue/vendor planning, return one JSON object with:
-- emailIndex: the email number this record came from (1-based, matching "Email N" below)
-- name: venue or vendor name
+For each email that is relevant to wedding venue/vendor planning, return EXACTLY ONE JSON object per email (not one per bullet point or amenity). Each object:
+- emailIndex: the email number (1-based, matching "Email N" below) — one record per email
+- name: the single primary venue or vendor name from that email
 - type: "venue" | "vendor" | "unknown"
 - contact: { email, name, phone } — from sender info
-- location: city, state/country
-- venueRentalFee: rental fee if mentioned
-- capacitySeated: seated capacity if mentioned
-- capacityReception: reception capacity if mentioned
-- availableDates: available dates mentioned
-- unavailableDates: unavailable dates mentioned
-- amenities: array of key features
-- pros: array of positives
-- cons: array of concerns
-- notes: any other relevant info
+- location: full city and state/country (e.g. "Chicago, IL" or "Miami Beach, FL")
+- venueRentalFee: rental fee as a single string if mentioned
+- capacitySeated: seated capacity as a single string
+- capacityReception: reception capacity as a single string
+- availableDates: all available dates as a single comma-separated string
+- unavailableDates: unavailable dates as a single string
+- amenities: array of key features (max 5)
+- pros: array of up to 3 positives
+- cons: array of up to 3 concerns
+- notes: brief summary of other relevant info (1-2 sentences max)
 - priorityScore: 1-10 fit with Monica's requirements
 - isOceanfront: boolean
 - tier: luxury tier estimate
 
-Skip emails that are clearly not venue/vendor related (newsletters, spam, receipts).
+Important: one object per relevant email. Skip emails that are newsletters, spam, or not venue/vendor related.
 
 Emails:
 ${emails.map((e, i) => `--- Email ${i + 1} ---
