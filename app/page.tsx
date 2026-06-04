@@ -2,7 +2,7 @@
 
 import { useSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { Mail, Search, FileText, Download, LogIn, Heart } from 'lucide-react'
+import { Mail, Search, FileText, Download, LogIn, Heart, Upload } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { VenueRecord, DraftEmail } from '@/types'
 import { weddingProfile } from '@/lib/monica'
@@ -73,6 +73,11 @@ export default function Dashboard() {
 
       {/* Quick actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <ImportAction onImport={(imported) => {
+          const merged = mergeVenues(venues, imported)
+          setVenues(merged)
+          localStorage.setItem('mw_venues', JSON.stringify(merged))
+        }} />
         <QuickAction
           href="/scan"
           icon={Mail}
@@ -121,6 +126,53 @@ export default function Dashboard() {
         </div>
       )}
     </div>
+  )
+}
+
+function mergeVenues(existing: VenueRecord[], fresh: VenueRecord[]): VenueRecord[] {
+  const map = new Map(existing.map((v) => [v.name.toLowerCase(), v]))
+  for (const v of fresh) {
+    if (!map.has(v.name.toLowerCase())) map.set(v.name.toLowerCase(), v)
+  }
+  return Array.from(map.values())
+}
+
+function ImportAction({ onImport }: { onImport: (venues: VenueRecord[]) => void }) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLoading(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/import', { method: 'POST', body: fd })
+    if (res.ok) {
+      const { venues, count } = await res.json()
+      onImport(venues)
+      alert(`Imported ${count} venues from your spreadsheet!`)
+    } else {
+      alert('Import failed — make sure it\'s the correct Excel file.')
+    }
+    setLoading(false)
+    e.target.value = ''
+  }
+
+  return (
+    <label
+      className="rounded-xl p-5 flex flex-col gap-2 cursor-pointer transition-colors"
+      style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
+    >
+      <Upload size={18} style={{ color: 'var(--accent)' }} />
+      <div className="font-medium">Import Existing Spreadsheet</div>
+      <div className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        Upload Monica&apos;s existing Excel file to preserve all her progress
+      </div>
+      <span className="text-sm mt-auto" style={{ color: 'var(--accent)' }}>
+        {loading ? 'Importing…' : 'Upload .xlsx →'}
+      </span>
+      <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFile} disabled={loading} />
+    </label>
   )
 }
 

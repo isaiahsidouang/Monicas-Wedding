@@ -67,22 +67,22 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
 
       {/* Key info row */}
       <div className="flex flex-wrap gap-3 text-sm" style={{ color: 'var(--text-muted)' }}>
-        {venue.pricing && (
+        {venue.venueRentalFee && (
           <span className="flex items-center gap-1">
             <DollarSign size={12} />
-            {venue.pricing}
+            {venue.venueRentalFee}
           </span>
         )}
-        {venue.capacity && (
+        {(venue.capacitySeated || venue.capacityReception) && (
           <span className="flex items-center gap-1">
             <Users size={12} />
-            {venue.capacity}
+            {venue.capacitySeated || venue.capacityReception}
           </span>
         )}
-        {venue.availability && (
+        {venue.availableDates && (
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {venue.availability}
+            {venue.availableDates}
           </span>
         )}
         {venue.tier && (

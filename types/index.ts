@@ -2,27 +2,46 @@ export interface VenueRecord {
   id: string
   name: string
   type: 'venue' | 'vendor' | 'unknown'
+  region?: 'illinois' | 'california' | 'puerto-rico' | 'caribbean' | 'miami' | 'other'
   contact: {
     name?: string
+    title?: string
     email: string
     phone?: string
+    website?: string
   }
   location: string
-  pricing?: string
-  capacity?: string
-  availability?: string
+  // Capacity
+  capacitySeated?: string
+  capacityReception?: string
+  // Financials
+  venueRentalFee?: string
+  fbMinimum?: string
+  // Availability
+  availableDates?: string
+  unavailableDates?: string
+  // Status & tracking
+  status: string // open-ended to match her existing statuses
+  priority: 'High' | 'Medium' | 'Low' | ''
+  tourScheduled?: string
+  followedUp?: string
+  lastResponseDate?: string
+  nextAction?: string
+  nextActionDueDate?: string
+  // Notes & analysis
+  notes?: string
   amenities?: string[]
   pros?: string[]
   cons?: string[]
-  notes?: string
+  isOceanfront?: boolean
+  tier?: string
+  // Source tracking
   priorityScore: number // 1–10 from Claude analysis
-  status: 'new' | 'contacted' | 'interested' | 'declined' | 'booked'
   emailSubject?: string
   emailDate?: string
   gmailThreadId?: string
-  isOceanfront?: boolean
-  tier?: string
   analyzedAt: string
+  importedFromExcel?: boolean
 }
 
 export interface DraftEmail {
