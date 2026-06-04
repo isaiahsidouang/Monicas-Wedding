@@ -30,9 +30,6 @@ export default function Dashboard() {
           <Heart size={18} style={{ color: 'var(--accent)' }} />
           <h1 className="text-2xl font-semibold">Monica&apos;s Wedding Planner</h1>
         </div>
-        <p style={{ color: 'var(--text-muted)' }}>
-          ~{weddingProfile.guestCount} guests · ${weddingProfile.budgetMax.toLocaleString()} venue budget · CA · Chicago · Miami · PR · Caribbean
-        </p>
       </div>
 
       {/* Auth prompt */}
