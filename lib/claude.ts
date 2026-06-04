@@ -50,21 +50,21 @@ For each email that is relevant to wedding venue/vendor planning, return EXACTLY
 - name: the single primary venue or vendor name from that email
 - type: "venue" | "vendor" | "unknown"
 - contact: { email, name, phone } — from sender info
-- location: full city and state/country (e.g. "Chicago, IL" or "Miami Beach, FL")
-- venueRentalFee: rental fee as a single string if mentioned
-- capacitySeated: seated capacity as a single string
-- capacityReception: reception capacity as a single string
-- availableDates: all available dates as a single comma-separated string
-- unavailableDates: unavailable dates as a single string
-- amenities: array of key features (max 5)
-- pros: array of up to 3 positives
-- cons: array of up to 3 concerns
-- notes: brief summary of other relevant info (1-2 sentences max)
+- location: city and state only, e.g. "Chicago, IL" or "Miami Beach, FL" (short, no street address)
+- venueRentalFee: Saturday rate only as a short string, e.g. "$12,000" or "$18,000/Sat" — max 20 chars, no breakdowns
+- capacitySeated: maximum seated guests as a number string only, e.g. "350" or "450" — no room details
+- capacityReception: maximum reception guests as a number string only, e.g. "600"
+- availableDates: up to 4 most relevant dates from Oct/Nov/Jan (Monica's preferred months), comma-separated, e.g. "Oct 10, Oct 31, Nov 14, Jan 9" — no day-of-week labels, no year unless not 2026
+- unavailableDates: only if explicitly stated as unavailable, keep short
+- amenities: array of up to 4 key features, each 3-5 words max
+- pros: array of up to 3 positives, each one short phrase
+- cons: array of up to 3 concerns, each one short phrase
+- notes: single sentence with the single most important unique fact about this venue
 - priorityScore: 1-10 fit with Monica's requirements
 - isOceanfront: boolean
-- tier: luxury tier estimate
+- tier: luxury tier estimate, e.g. "5-star" or "Luxury"
 
-Important: one object per relevant email. Skip emails that are newsletters, spam, or not venue/vendor related.
+Important: one object per relevant email. Keep all string fields SHORT — Monica needs to scan quickly. Skip emails that are newsletters, spam, or not venue/vendor related.
 
 Emails:
 ${emails.map((e, i) => `--- Email ${i + 1} ---

@@ -25,14 +25,18 @@ interface Props {
   onDraftEmail?: (venue: VenueRecord, type: 'follow-up' | 'decline') => void
 }
 
-function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function truncate(str: string, max: number) {
+  return str.length > max ? str.slice(0, max).trimEnd() + '…' : str
+}
+
+function Row({ icon, label, value, maxChars = 80 }: { icon: React.ReactNode; label: string; value: string; maxChars?: number }) {
   return (
     <div className="flex gap-2 text-sm">
-      <div className="flex items-start gap-1.5 shrink-0 mt-0.5" style={{ color: 'var(--text-muted)', minWidth: 90 }}>
+      <div className="flex items-center gap-1.5 shrink-0" style={{ color: 'var(--text-muted)', minWidth: 80 }}>
         {icon}
         <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
       </div>
-      <span style={{ color: '#e8e0d8' }}>{value}</span>
+      <span style={{ color: '#e8e0d8' }}>{truncate(value, maxChars)}</span>
     </div>
   )
 }
@@ -124,23 +128,24 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
       {/* ── Key facts as bullet rows ── */}
       <div className="px-4 pb-3 flex flex-col gap-2 border-t" style={{ borderColor: 'var(--border)', paddingTop: 12 }}>
         {venue.venueRentalFee && (
-          <Row icon={<DollarSign size={12} />} label="Fee" value={venue.venueRentalFee} />
+          <Row icon={<DollarSign size={12} />} label="Fee" value={venue.venueRentalFee} maxChars={40} />
         )}
         {(venue.capacitySeated || venue.capacityReception) && (
           <Row
             icon={<Users size={12} />}
             label="Capacity"
+            maxChars={50}
             value={[
-              venue.capacitySeated   ? `${venue.capacitySeated} seated`    : '',
+              venue.capacitySeated    ? `${venue.capacitySeated} seated`     : '',
               venue.capacityReception ? `${venue.capacityReception} reception` : '',
             ].filter(Boolean).join(' · ')}
           />
         )}
         {venue.availableDates && (
-          <Row icon={<Calendar size={12} />} label="Available" value={venue.availableDates} />
+          <Row icon={<Calendar size={12} />} label="Available" value={venue.availableDates} maxChars={60} />
         )}
         {venue.unavailableDates && (
-          <Row icon={<X size={12} />} label="Unavailable" value={venue.unavailableDates} />
+          <Row icon={<X size={12} />} label="Unavailable" value={venue.unavailableDates} maxChars={60} />
         )}
       </div>
 
@@ -196,7 +201,7 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
           {venue.notes && (
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Notes</span>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{venue.notes}</p>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{truncate(venue.notes, 160)}</p>
             </div>
           )}
 
