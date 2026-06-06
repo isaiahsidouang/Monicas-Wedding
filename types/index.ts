@@ -61,7 +61,9 @@ export interface KnownVenue {
   name: string
   brand: string
   location: string
-  region: 'california' | 'chicago' | 'miami' | 'puerto-rico' | 'caribbean'
+  region: 'california' | 'chicago' | 'miami' | 'puerto-rico' | 'caribbean' |
+          'hawaii' | 'new-york' | 'florida-keys' | 'new-england' |
+          'las-vegas' | 'nashville' | 'new-orleans' | 'scottsdale' | 'usvi' | 'other'
   capacity: string
   isOceanfront: boolean
   contactEmail?: string

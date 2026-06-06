@@ -1,84 +1,264 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, MapPin, Users, Waves, Send, Sparkles } from 'lucide-react'
-import { knownVenues, weddingProfile } from '@/lib/monica'
+import { useState, useEffect, useRef } from 'react'
+import { Search, MapPin, Users, Waves, Send, Sparkles, ChevronDown } from 'lucide-react'
+import { knownVenues } from '@/lib/monica'
 import HelpBanner from '@/components/HelpBanner'
 import type { KnownVenue, DraftEmail } from '@/types'
 
+// ── Filter Options ─────────────────────────────────────────────────────────────
+
 const FILTER_REGION = [
-  { value: 'all',          label: 'All Regions' },
-  { value: 'california',   label: 'California' },
-  { value: 'chicago',      label: 'Chicago' },
-  { value: 'miami',        label: 'Miami / South FL' },
-  { value: 'puerto-rico',  label: 'Puerto Rico' },
-  { value: 'caribbean',    label: 'Caribbean' },
+  { value: 'california',       label: 'California – Los Angeles' },
+  { value: 'california-sd',    label: 'California – San Diego' },
+  { value: 'california-napa',  label: 'California – Napa Valley' },
+  { value: 'california-sb',    label: 'California – Santa Barbara' },
+  { value: 'california-sf',    label: 'California – San Francisco' },
+  { value: 'california-palm',  label: 'California – Palm Springs' },
+  { value: 'chicago',          label: 'Chicago / Illinois' },
+  { value: 'new-york',         label: 'New York City' },
+  { value: 'new-england',      label: 'New England (Boston / Newport)' },
+  { value: 'miami',            label: 'Miami / South Florida' },
+  { value: 'florida-keys',     label: 'Florida Keys' },
+  { value: 'new-orleans',      label: 'New Orleans, Louisiana' },
+  { value: 'nashville',        label: 'Nashville, Tennessee' },
+  { value: 'las-vegas',        label: 'Las Vegas, Nevada' },
+  { value: 'scottsdale',       label: 'Scottsdale, Arizona' },
+  { value: 'hawaii',           label: 'Hawaii – Maui' },
+  { value: 'hawaii-oahu',      label: 'Hawaii – Oahu / Big Island' },
+  { value: 'puerto-rico',      label: 'Puerto Rico' },
+  { value: 'usvi',             label: 'US Virgin Islands' },
+  { value: 'caribbean',        label: 'Caribbean – Grand Cayman' },
+  { value: 'caribbean-aruba',  label: 'Caribbean – Aruba' },
+  { value: 'caribbean-bda',    label: 'Caribbean – Bermuda' },
+  { value: 'caribbean-tc',     label: 'Caribbean – Turks & Caicos' },
+  { value: 'caribbean-bds',    label: 'Caribbean – Barbados' },
+  { value: 'caribbean-sl',     label: 'Caribbean – St. Lucia' },
+  { value: 'caribbean-ant',    label: 'Caribbean – Antigua' },
 ]
 
 const FILTER_BRAND = [
-  { value: 'any',                label: 'Any Luxury Brand' },
-  { value: 'Ritz-Carlton',       label: 'Ritz-Carlton' },
-  { value: 'Four Seasons',       label: 'Four Seasons' },
-  { value: 'St. Regis',          label: 'St. Regis' },
-  { value: 'Rosewood',           label: 'Rosewood' },
-  { value: 'Aman',               label: 'Aman' },
-  { value: 'Waldorf Astoria',    label: 'Waldorf Astoria' },
-  { value: 'EDITION',            label: 'EDITION Hotels' },
-  { value: 'W Hotels',           label: 'W Hotels' },
-  { value: 'Mandarin Oriental',  label: 'Mandarin Oriental' },
-  { value: 'Conrad',             label: 'Conrad Hotels' },
+  { value: 'Ritz-Carlton',      label: 'Ritz-Carlton' },
+  { value: 'Four Seasons',      label: 'Four Seasons' },
+  { value: 'St. Regis',         label: 'St. Regis' },
+  { value: 'Rosewood',          label: 'Rosewood' },
+  { value: 'Aman',              label: 'Aman' },
+  { value: 'Waldorf Astoria',   label: 'Waldorf Astoria' },
+  { value: 'EDITION',           label: 'EDITION Hotels' },
+  { value: 'W Hotels',          label: 'W Hotels' },
+  { value: 'Mandarin Oriental', label: 'Mandarin Oriental' },
+  { value: 'Conrad',            label: 'Conrad Hotels' },
+  { value: 'Park Hyatt',        label: 'Park Hyatt' },
+  { value: 'Andaz',             label: 'Andaz by Hyatt' },
+  { value: 'Auberge Resorts',   label: 'Auberge Resorts' },
+  { value: '1 Hotels',          label: '1 Hotels' },
+  { value: 'Montage',           label: 'Montage Hotels' },
+  { value: 'Pendry',            label: 'Pendry Hotels' },
+  { value: 'Grand Hyatt',       label: 'Grand Hyatt' },
+  { value: 'InterContinental',  label: 'InterContinental' },
+  { value: 'Belmond',           label: 'Belmond' },
+  { value: 'Capella',           label: 'Capella Hotels' },
+  { value: 'Raffles',           label: 'Raffles' },
+  { value: 'Banyan Tree',       label: 'Banyan Tree' },
+  { value: 'SLS',               label: 'SLS Hotels' },
+  { value: 'JW Marriott',       label: 'JW Marriott' },
+  { value: 'Loews',             label: 'Loews Hotels' },
 ]
 
 const FILTER_SETTING = [
-  { value: 'any',        label: 'Any Setting' },
-  { value: 'oceanfront', label: 'Oceanfront Only' },
-  { value: 'city',       label: 'City / Ballroom' },
+  { value: 'oceanfront', label: 'Oceanfront / Beachfront' },
+  { value: 'city',       label: 'City Hotel & Ballroom' },
   { value: 'resort',     label: 'Resort & Estate' },
+  { value: 'garden',     label: 'Garden & Outdoor' },
+  { value: 'rooftop',    label: 'Rooftop Venue' },
+  { value: 'historic',   label: 'Historic / Landmark' },
+  { value: 'vineyard',   label: 'Vineyard / Winery' },
+  { value: 'island',     label: 'Private Island Resort' },
+  { value: 'mountain',   label: 'Mountain & Scenic' },
+  { value: 'villa',      label: 'Private Villa' },
 ]
 
 const FILTER_CAPACITY = [
-  { value: '350', label: '350+ guests' },
-  { value: '400', label: '400+ guests' },
-  { value: '500', label: '500+ guests' },
+  { value: '200',  label: '200+ guests' },
+  { value: '250',  label: '250+ guests' },
+  { value: '300',  label: '300+ guests' },
+  { value: '350',  label: '350+ guests' },
+  { value: '400',  label: '400+ guests' },
+  { value: '450',  label: '450+ guests' },
+  { value: '500',  label: '500+ guests' },
+  { value: '600',  label: '600+ guests' },
+  { value: '700',  label: '700+ guests' },
+  { value: '800',  label: '800+ guests' },
+  { value: '1000', label: '1,000+ guests' },
 ]
 
 const REGION_TAB_LABELS: Record<string, string> = {
-  all:           'All Locations',
-  california:    'California',
-  chicago:       'Chicago',
-  miami:         'Miami / South FL',
-  'puerto-rico': 'Puerto Rico',
-  caribbean:     'Caribbean',
+  all:            'All Locations',
+  california:     'California',
+  chicago:        'Chicago',
+  miami:          'Miami / South FL',
+  'puerto-rico':  'Puerto Rico',
+  caribbean:      'Caribbean',
+  hawaii:         'Hawaii',
+  'new-york':     'New York',
+  'florida-keys': 'Florida Keys',
+  'new-england':  'New England',
+  nashville:      'Nashville',
+  'new-orleans':  'New Orleans',
+  'las-vegas':    'Las Vegas',
+  scottsdale:     'Scottsdale',
+  usvi:           'USVI',
+  other:          'Other',
 }
 
-const selectStyle: React.CSSProperties = {
-  background:   'var(--card)',
-  border:       '1px solid var(--border)',
-  color:        'var(--text)',
-  borderRadius: '8px',
-  padding:      '8px 10px',
-  fontSize:     '0.85rem',
-  width:        '100%',
-  outline:      'none',
-  cursor:       'pointer',
+const ALWAYS_TABS = new Set(['all', 'california', 'chicago', 'miami', 'puerto-rico', 'caribbean'])
+
+// ── MultiSelect ────────────────────────────────────────────────────────────────
+
+const triggerStyle: React.CSSProperties = {
+  background:     'var(--card)',
+  border:         '1px solid var(--border)',
+  color:          'var(--text)',
+  borderRadius:   '8px',
+  padding:        '8px 10px',
+  fontSize:       '0.85rem',
+  width:          '100%',
+  cursor:         'pointer',
+  display:        'flex',
+  alignItems:     'center',
+  justifyContent: 'space-between',
+  textAlign:      'left',
 }
+
+function MultiSelect({
+  label,
+  options,
+  selected,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  options: { value: string; label: string }[]
+  selected: string[]
+  onChange: (val: string[]) => void
+  placeholder: string
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [])
+
+  function toggle(value: string) {
+    onChange(selected.includes(value)
+      ? selected.filter(v => v !== value)
+      : [...selected, value])
+  }
+
+  const displayLabel =
+    selected.length === 0
+      ? placeholder
+      : selected.length === 1
+      ? (options.find(o => o.value === selected[0])?.label ?? selected[0])
+      : `${selected.length} selected`
+
+  return (
+    <div ref={ref} className="flex flex-col gap-1.5" style={{ position: 'relative' }}>
+      <label className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</label>
+      <button type="button" onClick={() => setOpen(o => !o)} style={triggerStyle}>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+          {displayLabel}
+        </span>
+        <ChevronDown
+          size={12}
+          style={{ flexShrink: 0, marginLeft: 6, transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }}
+        />
+      </button>
+      {open && (
+        <div style={{
+          position:  'absolute',
+          top:       'calc(100% + 4px)',
+          left:      0,
+          right:     0,
+          zIndex:    100,
+          background:'#1e1a15',
+          border:    '1px solid var(--border)',
+          borderRadius: 8,
+          maxHeight: 280,
+          overflowY: 'auto',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.55)',
+        }}>
+          {selected.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className="w-full text-left px-3 py-2 text-xs"
+              style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}
+            >
+              Clear selection
+            </button>
+          )}
+          {options.map(opt => {
+            const checked = selected.includes(opt.value)
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => toggle(opt.value)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left"
+                style={{
+                  color:      checked ? 'var(--accent)' : 'var(--text)',
+                  background: checked ? 'rgba(201,169,110,0.08)' : 'transparent',
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => {
+                  if (!checked) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = checked ? 'rgba(201,169,110,0.08)' : 'transparent'
+                }}
+              >
+                <div style={{
+                  width:      14,
+                  height:     14,
+                  flexShrink: 0,
+                  border:     `1.5px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
+                  borderRadius: 3,
+                  background: checked ? 'var(--accent)' : 'transparent',
+                  display:    'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {checked && <span style={{ color: '#0c0a08', fontSize: 8, fontWeight: 800, lineHeight: 1 }}>✓</span>}
+                </div>
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function VenuesPage() {
-  // Display filter (tabs)
   const [regionTab, setRegionTab] = useState<string>('all')
-
-  // Selection & email generation
-  const [selected,   setSelected]   = useState<Set<string>>(new Set())
+  const [selected,  setSelected]  = useState<Set<string>>(new Set())
   const [generating, setGenerating] = useState(false)
   const [generated,  setGenerated]  = useState(0)
 
-  // AI search filters
-  const [searchRegion,   setSearchRegion]   = useState('all')
-  const [searchBrand,    setSearchBrand]    = useState('any')
-  const [searchSetting,  setSearchSetting]  = useState('any')
-  const [searchCapacity, setSearchCapacity] = useState('350')
+  const [searchRegions,    setSearchRegions]    = useState<string[]>([])
+  const [searchBrands,     setSearchBrands]     = useState<string[]>([])
+  const [searchSettings,   setSearchSettings]   = useState<string[]>([])
+  const [searchCapacities, setSearchCapacities] = useState<string[]>([])
 
-  // AI search state
   const [discovering,      setDiscovering]      = useState(false)
   const [discoveredVenues, setDiscoveredVenues] = useState<KnownVenue[]>([])
   const [discoverError,    setDiscoverError]    = useState('')
@@ -91,20 +271,24 @@ export default function VenuesPage() {
   const allVenues = [...knownVenues, ...discoveredVenues]
   const filtered  = allVenues.filter(v => regionTab === 'all' || v.region === regionTab)
 
+  const tabsToShow = Object.entries(REGION_TAB_LABELS).filter(([key]) => {
+    if (ALWAYS_TABS.has(key)) return true
+    return allVenues.filter(v => v.region === key).length > 0
+  })
+
   async function runSearch() {
     setDiscovering(true)
     setDiscoverError('')
     const params = new URLSearchParams({
-      region:   searchRegion,
-      brand:    searchBrand,
-      setting:  searchSetting,
-      capacity: searchCapacity,
+      region:   searchRegions.join(','),
+      brand:    searchBrands.join(','),
+      setting:  searchSettings.join(','),
+      capacity: searchCapacities.join(','),
     })
     try {
       const res = await fetch(`/api/venues/search?${params}`)
       if (!res.ok) throw new Error('Search failed')
       const { venues } = await res.json()
-      // Merge new results with any existing ones (deduplicate by name)
       const merged = [
         ...discoveredVenues.filter(
           d => !venues.some((v: KnownVenue) => v.name.toLowerCase() === d.name.toLowerCase())
@@ -176,7 +360,7 @@ export default function VenuesPage() {
         storageKey="venues"
         title="How to use Find Venues"
         steps={[
-          { n: 1, text: 'Use the AI search panel to filter by region, brand, setting, and capacity — then click Search to discover new venues.' },
+          { n: 1, text: 'Use the AI search panel — pick any combination of regions, brands, settings, and capacities (multi-select supported), then click Search.' },
           { n: 2, text: 'Check the box on any venue you want to contact.' },
           { n: 3, text: 'Click "Generate Inquiry Emails" — AI drafts a personalized inquiry for each selected venue.' },
           { n: 4, text: 'Go to the Drafts tab to review every email before sending to Gmail.' },
@@ -197,38 +381,37 @@ export default function VenuesPage() {
           </span>
         </div>
 
-        {/* Dropdowns */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs" style={{ color: 'var(--text-muted)' }}>Region</label>
-            <select value={searchRegion} onChange={e => setSearchRegion(e.target.value)} style={selectStyle}>
-              {FILTER_REGION.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs" style={{ color: 'var(--text-muted)' }}>Brand</label>
-            <select value={searchBrand} onChange={e => setSearchBrand(e.target.value)} style={selectStyle}>
-              {FILTER_BRAND.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs" style={{ color: 'var(--text-muted)' }}>Setting</label>
-            <select value={searchSetting} onChange={e => setSearchSetting(e.target.value)} style={selectStyle}>
-              {FILTER_SETTING.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs" style={{ color: 'var(--text-muted)' }}>Min Capacity</label>
-            <select value={searchCapacity} onChange={e => setSearchCapacity(e.target.value)} style={selectStyle}>
-              {FILTER_CAPACITY.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
+          <MultiSelect
+            label="Region"
+            options={FILTER_REGION}
+            selected={searchRegions}
+            onChange={setSearchRegions}
+            placeholder="All Regions"
+          />
+          <MultiSelect
+            label="Brand"
+            options={FILTER_BRAND}
+            selected={searchBrands}
+            onChange={setSearchBrands}
+            placeholder="Any Brand"
+          />
+          <MultiSelect
+            label="Setting"
+            options={FILTER_SETTING}
+            selected={searchSettings}
+            onChange={setSearchSettings}
+            placeholder="Any Setting"
+          />
+          <MultiSelect
+            label="Min Capacity"
+            options={FILTER_CAPACITY}
+            selected={searchCapacities}
+            onChange={setSearchCapacities}
+            placeholder="Any Capacity"
+          />
         </div>
 
-        {/* Search button + error */}
         <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={runSearch}
@@ -254,15 +437,15 @@ export default function VenuesPage() {
 
       {/* ── Region tabs ─────────────────────────────────── */}
       <div className="flex flex-wrap gap-2">
-        {Object.entries(REGION_TAB_LABELS).map(([key, label]) => (
+        {tabsToShow.map(([key, label]) => (
           <button
             key={key}
             onClick={() => setRegionTab(key)}
             className="px-3 py-1.5 rounded-lg text-sm transition-colors"
             style={{
-              background:  regionTab === key ? 'rgba(201,169,110,0.15)' : 'var(--card)',
-              border:      `1px solid ${regionTab === key ? 'var(--accent)' : 'var(--border)'}`,
-              color:       regionTab === key ? 'var(--accent)' : 'var(--text-muted)',
+              background: regionTab === key ? 'rgba(201,169,110,0.15)' : 'var(--card)',
+              border:     `1px solid ${regionTab === key ? 'var(--accent)' : 'var(--border)'}`,
+              color:      regionTab === key ? 'var(--accent)' : 'var(--text-muted)',
             }}
           >
             {label} ({key === 'all' ? allVenues.length : allVenues.filter(v => v.region === key).length})
@@ -331,7 +514,6 @@ function VenueCard({ venue, selected, onToggle }: {
         border: `1px solid ${selected ? 'var(--accent)' : venue.discovered ? 'rgba(139,92,246,0.4)' : 'var(--border)'}`,
       }}
     >
-      {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -352,7 +534,6 @@ function VenueCard({ venue, selected, onToggle }: {
         </div>
       </div>
 
-      {/* Info badges */}
       <div className="flex flex-wrap gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
         <span className="flex items-center gap-1"><MapPin size={11} />{venue.location}</span>
         <span className="flex items-center gap-1"><Users size={11} />{venue.capacity}</span>
