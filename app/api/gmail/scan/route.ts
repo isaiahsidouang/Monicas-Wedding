@@ -9,7 +9,7 @@ const WEDDING_KEYWORDS = [
 ]
 
 function buildQuery(): string {
-  const kw = WEDDING_KEYWORDS.slice(0, 6).join(' OR ')
+  const kw = WEDDING_KEYWORDS.join(' OR ')
   return `(${kw}) newer_than:365d`
 }
 
