@@ -67,6 +67,7 @@ export interface KnownVenue {
   contactEmail?: string
   phone?: string
   description: string
+  discovered?: boolean
 }
 
 export interface WeddingProfile {

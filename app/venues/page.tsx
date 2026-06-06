@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, MapPin, Users, Waves, Send } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, MapPin, Users, Waves, Send, Sparkles } from 'lucide-react'
 import { knownVenues, weddingProfile } from '@/lib/monica'
 import HelpBanner from '@/components/HelpBanner'
 import type { KnownVenue, DraftEmail } from '@/types'
@@ -20,8 +20,33 @@ export default function VenuesPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState(0)
+  const [discovering, setDiscovering] = useState(false)
+  const [discoveredVenues, setDiscoveredVenues] = useState<KnownVenue[]>([])
+  const [discoverError, setDiscoverError] = useState('')
 
-  const filtered = knownVenues.filter((v) => region === 'all' || v.region === region)
+  useEffect(() => {
+    const stored = localStorage.getItem('mw_discovered_venues')
+    if (stored) setDiscoveredVenues(JSON.parse(stored))
+  }, [])
+
+  const allVenues = [...knownVenues, ...discoveredVenues]
+  const filtered = allVenues.filter((v) => region === 'all' || v.region === region)
+
+  async function discoverVenues() {
+    setDiscovering(true)
+    setDiscoverError('')
+    try {
+      const res = await fetch('/api/venues/search')
+      if (!res.ok) throw new Error('Search failed')
+      const { venues } = await res.json()
+      setDiscoveredVenues(venues)
+      localStorage.setItem('mw_discovered_venues', JSON.stringify(venues))
+    } catch (e) {
+      setDiscoverError(e instanceof Error ? e.message : 'Search failed')
+    } finally {
+      setDiscovering(false)
+    }
+  }
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -108,6 +133,25 @@ export default function VenuesPage() {
         ]}
       />
 
+      {/* Discover button */}
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={discoverVenues}
+          disabled={discovering}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-opacity hover:opacity-85 disabled:opacity-50 self-start"
+          style={{ background: 'var(--accent)', color: '#0c0a08' }}
+        >
+          <Sparkles size={15} className={discovering ? 'animate-pulse' : ''} />
+          {discovering ? 'Searching for venues…' : discoveredVenues.length > 0 ? `Refresh Search (${discoveredVenues.length} found)` : 'Find New Venues with AI'}
+        </button>
+        {discoverError && <p className="text-sm" style={{ color: '#f87171' }}>Error: {discoverError}</p>}
+        {discoveredVenues.length > 0 && !discovering && (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            AI found {discoveredVenues.length} additional venues · results saved until you refresh
+          </p>
+        )}
+      </div>
+
       {/* Region filter */}
       <div className="flex flex-wrap gap-2">
         {Object.entries(REGION_LABELS).map(([key, label]) => (
@@ -121,7 +165,7 @@ export default function VenuesPage() {
               color: region === key ? 'var(--accent)' : 'var(--text-muted)',
             }}
           >
-            {label} ({key === 'all' ? knownVenues.length : knownVenues.filter((v) => v.region === key).length})
+            {label} ({key === 'all' ? allVenues.length : allVenues.filter((v) => v.region === key).length})
           </button>
         ))}
       </div>
@@ -182,13 +226,20 @@ function VenueCard({ venue, selected, onToggle }: {
       className="rounded-xl p-4 flex flex-col gap-3 text-left transition-all"
       style={{
         background: selected ? 'rgba(201,169,110,0.08)' : 'var(--card)',
-        border: `1px solid ${selected ? 'var(--accent)' : 'var(--border)'}`,
+        border: `1px solid ${selected ? 'var(--accent)' : venue.discovered ? 'rgba(139,92,246,0.4)' : 'var(--border)'}`,
       }}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm leading-snug">{venue.name}</div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="font-semibold text-sm leading-snug">{venue.name}</div>
+            {venue.discovered && (
+              <span className="text-xs px-1.5 py-0.5 rounded font-medium" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa', fontSize: '0.6rem', letterSpacing: '0.05em' }}>
+                AI FOUND
+              </span>
+            )}
+          </div>
           <div className="text-xs mt-0.5" style={{ color: 'var(--accent)' }}>{venue.brand}</div>
         </div>
         <div
