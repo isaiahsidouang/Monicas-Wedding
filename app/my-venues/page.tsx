@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Table2, Download, Search } from 'lucide-react'
+import { Table2, Download, Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { loadFromDb, saveToDb } from '@/lib/db-client'
 import type { VenueRecord } from '@/types'
 
@@ -15,6 +15,7 @@ const REGION_LABELS: Record<string, string> = {
   other: 'Other',
 }
 
+const PRIORITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2, '': 3 }
 const PRIORITY_COLORS: Record<string, string> = {
   High: '#c05470',
   Medium: '#c9874a',
@@ -22,13 +23,74 @@ const PRIORITY_COLORS: Record<string, string> = {
   '': 'var(--text-muted)',
 }
 
+type SortCol =
+  | 'name' | 'region' | 'contact' | 'status' | 'lastReply'
+  | 'priority' | 'venueRentalFee' | 'fbMinimum'
+  | 'availableDates' | 'nextAction' | 'notes'
+
+function getSortValue(v: VenueRecord, col: SortCol): string {
+  switch (col) {
+    case 'name':          return v.name.toLowerCase()
+    case 'region':        return (REGION_LABELS[v.region || ''] || v.region || '').toLowerCase()
+    case 'contact':       return (v.contact.name || v.contact.email || '').toLowerCase()
+    case 'status':        return (v.status || '').toLowerCase()
+    case 'lastReply':     return v.lastResponseFrom || ''
+    case 'priority':      return String(PRIORITY_ORDER[v.priority] ?? 3)
+    case 'venueRentalFee':return (v.venueRentalFee || '').toLowerCase()
+    case 'fbMinimum':     return (v.fbMinimum || '').toLowerCase()
+    case 'availableDates':return (v.availableDates || '').toLowerCase()
+    case 'nextAction':    return (v.nextActionDueDate || v.nextAction || '').toLowerCase()
+    case 'notes':         return (v.notes || '').toLowerCase()
+  }
+}
+
+function sortVenues(venues: VenueRecord[], col: SortCol, dir: 'asc' | 'desc'): VenueRecord[] {
+  const sign = dir === 'asc' ? 1 : -1
+  return [...venues].sort((a, b) => {
+    const va = getSortValue(a, col)
+    const vb = getSortValue(b, col)
+    // Empty values always sort last regardless of direction
+    if (!va && vb) return 1
+    if (va && !vb) return -1
+    return sign * va.localeCompare(vb, undefined, { numeric: true })
+  })
+}
+
+function SortTh({
+  col, label, current, dir, onSort,
+}: {
+  col: SortCol
+  label: string
+  current: SortCol | null
+  dir: 'asc' | 'desc'
+  onSort: (col: SortCol) => void
+}) {
+  const active = current === col
+  return (
+    <th className="px-4 py-3 text-left whitespace-nowrap">
+      <button
+        onClick={() => onSort(col)}
+        className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide transition-opacity hover:opacity-70"
+        style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }}
+      >
+        {label}
+        <span className="opacity-50" style={{ color: active ? 'var(--accent)' : 'var(--text-muted)' }}>
+          {active
+            ? dir === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />
+            : <ChevronsUpDown size={11} />}
+        </span>
+      </button>
+    </th>
+  )
+}
+
 export default function MyVenuesPage() {
   const { data: session } = useSession()
   const [venues, setVenues] = useState<VenueRecord[]>([])
   const [search, setSearch] = useState('')
-  const [regionFilter, setRegionFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [lastReplyFilter, setLastReplyFilter] = useState<'all' | 'vendor' | 'user'>('all')
+  const [sortCol, setSortCol] = useState<SortCol | null>(null)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -48,8 +110,14 @@ export default function MyVenuesPage() {
     if (session) saveToDb('mw_venues', updated)
   }
 
-  const regions = ['all', ...Array.from(new Set(venues.map((v) => v.region || 'other').filter(Boolean)))]
-  const statuses = ['all', ...Array.from(new Set(venues.map((v) => v.status).filter(Boolean)))]
+  function handleSort(col: SortCol) {
+    if (sortCol === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortCol(col)
+      setSortDir('asc')
+    }
+  }
 
   const filtered = venues.filter((v) => {
     const q = search.toLowerCase()
@@ -59,13 +127,20 @@ export default function MyVenuesPage() {
       (v.contact.email || '').toLowerCase().includes(q) ||
       (v.contact.name || '').toLowerCase().includes(q) ||
       (v.notes || '').toLowerCase().includes(q) ||
-      (v.status || '').toLowerCase().includes(q)
-    const matchRegion = regionFilter === 'all' || (v.region || 'other') === regionFilter
-    const matchStatus = statusFilter === 'all' || v.status === statusFilter
-    const effectiveSender = v.lastResponseFrom ?? v.lastEmailSender ?? (v.emailDate ? 'vendor' : undefined)
-    const matchReply = lastReplyFilter === 'all' || effectiveSender === lastReplyFilter
-    return matchSearch && matchRegion && matchStatus && matchReply
+      (v.status || '').toLowerCase().includes(q) ||
+      (REGION_LABELS[v.region || ''] || v.region || '').toLowerCase().includes(q)
+
+    // "vendor replied last" = explicitly marked vendor OR not manually marked at all
+    // "monica replied last" = explicitly marked user
+    const matchReply =
+      lastReplyFilter === 'all' ||
+      (lastReplyFilter === 'vendor' && v.lastResponseFrom !== 'user') ||
+      (lastReplyFilter === 'user' && v.lastResponseFrom === 'user')
+
+    return matchSearch && matchReply
   })
+
+  const displayed = sortCol ? sortVenues(filtered, sortCol, sortDir) : filtered
 
   async function handleExport() {
     if (venues.length === 0) return
@@ -91,6 +166,8 @@ export default function MyVenuesPage() {
     }
   }
 
+  const monicaMarkedCount = venues.filter(v => v.lastResponseFrom === 'user').length
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-6">
       {/* Header */}
@@ -101,7 +178,7 @@ export default function MyVenuesPage() {
             My Venues
           </h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {venues.length} venues tracked · imported from your spreadsheet
+            {venues.length} venues tracked
           </p>
         </div>
         <button
@@ -116,60 +193,48 @@ export default function MyVenuesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-48">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
           <input
             type="text"
-            placeholder="Search venues, contacts, notes…"
+            placeholder="Search venues, contacts, region, notes…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-8 pr-3 py-2 rounded-lg text-sm"
             style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
           />
         </div>
-        <select
-          value={regionFilter}
-          onChange={(e) => setRegionFilter(e.target.value)}
-          className="px-3 py-2 rounded-lg text-sm"
-          style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)' }}
-        >
-          <option value="all">All Regions</option>
-          {regions.filter((r) => r !== 'all').map((r) => (
-            <option key={r} value={r}>{REGION_LABELS[r] || r}</option>
+        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+          {([
+            { val: 'all', label: 'All' },
+            { val: 'vendor', label: 'Vendor replied last' },
+            { val: 'user', label: 'Monica replied last' },
+          ] as const).map(({ val, label }) => (
+            <button
+              key={val}
+              onClick={() => setLastReplyFilter(val)}
+              className="px-3 py-2 text-xs transition-colors whitespace-nowrap"
+              style={{
+                background: lastReplyFilter === val ? 'rgba(201,169,110,0.15)' : 'var(--card)',
+                color: lastReplyFilter === val ? 'var(--accent)' : 'var(--text-muted)',
+                borderRight: val !== 'user' ? '1px solid var(--border)' : 'none',
+              }}
+            >
+              {label}
+            </button>
           ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 rounded-lg text-sm"
-          style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)' }}
-        >
-          <option value="all">All Statuses</option>
-          {statuses.filter((s) => s !== 'all').map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select
-          value={lastReplyFilter}
-          onChange={(e) => setLastReplyFilter(e.target.value as 'all' | 'vendor' | 'user')}
-          className="px-3 py-2 rounded-lg text-sm"
-          style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)' }}
-        >
-          <option value="all">Last Reply: All</option>
-          <option value="vendor">Vendor replied last</option>
-          <option value="user">Monica replied last</option>
-        </select>
+        </div>
       </div>
 
       {/* Count */}
-      {(search || regionFilter !== 'all' || statusFilter !== 'all') && (
+      {(search || lastReplyFilter !== 'all') && (
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          Showing {filtered.length} of {venues.length} venues
+          Showing {displayed.length} of {venues.length} venues
         </p>
       )}
 
-      {/* Empty state */}
+      {/* Empty state — no venues at all */}
       {venues.length === 0 && (
         <div className="rounded-xl p-10 text-center" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
           <p className="font-medium">No venues loaded yet</p>
@@ -179,33 +244,56 @@ export default function MyVenuesPage() {
         </div>
       )}
 
+      {/* Empty state — Monica replied last filter with no marked venues */}
+      {venues.length > 0 && displayed.length === 0 && lastReplyFilter === 'user' && (
+        <div className="rounded-xl p-8 text-center" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+          <p className="font-medium text-sm">No venues marked as &ldquo;Monica replied last&rdquo; yet</p>
+          <p className="text-sm mt-1.5" style={{ color: 'var(--text-muted)' }}>
+            In the <strong>Last Reply</strong> column, click <strong>Monica</strong> on any venue where you sent the last message and are waiting to hear back.
+          </p>
+          {monicaMarkedCount === 0 && (
+            <p className="text-xs mt-2" style={{ color: 'var(--text-muted)', opacity: 0.6 }}>
+              Tip: use &ldquo;All&rdquo; view to see all venues, then mark them.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Table */}
-      {filtered.length > 0 && (
+      {displayed.length > 0 && (
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: '#fdf2f4', borderBottom: '1px solid var(--border)' }}>
-                  {['Venue / Vendor', 'Region', 'Contact', 'Status', 'Last Reply', 'Priority', 'Venue Fee', 'F&B Min', 'Available Dates', 'Next Action', 'Notes'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--accent)' }}>
-                      {h}
-                    </th>
-                  ))}
+                  <SortTh col="name"          label="Venue / Vendor"  current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="region"        label="Region"          current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="contact"       label="Contact"         current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="status"        label="Status"          current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="lastReply"     label="Last Reply"      current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="priority"      label="Priority"        current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="venueRentalFee" label="Venue Fee"      current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="fbMinimum"     label="F&amp;B Min"     current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="availableDates" label="Available Dates" current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="nextAction"    label="Next Action"     current={sortCol} dir={sortDir} onSort={handleSort} />
+                  <SortTh col="notes"         label="Notes"           current={sortCol} dir={sortDir} onSort={handleSort} />
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((v, i) => (
+                {displayed.map((v, i) => (
                   <tr
                     key={v.id}
                     style={{
-                      borderBottom: i < filtered.length - 1 ? '1px solid var(--border)' : 'none',
+                      borderBottom: i < displayed.length - 1 ? '1px solid var(--border)' : 'none',
                       background: i % 2 === 0 ? 'var(--card)' : 'var(--bg)',
                     }}
                   >
                     <td className="px-4 py-3 font-medium min-w-48 max-w-56">
                       <div className="truncate">{v.name}</div>
                       {v.contact.website && (
-                        <div className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{v.contact.website}</div>
+                        <div className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                          {v.contact.website}
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -218,7 +306,9 @@ export default function MyVenuesPage() {
                           {v.contact.email}
                         </a>
                       )}
-                      {v.contact.phone && <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{v.contact.phone}</div>}
+                      {v.contact.phone && (
+                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{v.contact.phone}</div>
+                      )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
@@ -235,7 +325,11 @@ export default function MyVenuesPage() {
                             })}
                             className="text-xs px-2 py-0.5 rounded-full transition-colors"
                             style={v.lastResponseFrom === who
-                              ? { background: who === 'vendor' ? '#3d8a5620' : '#c054701a', color: who === 'vendor' ? '#3d8a56' : '#c05470', border: `1px solid ${who === 'vendor' ? '#3d8a56' : '#c05470'}` }
+                              ? {
+                                  background: who === 'vendor' ? '#3d8a5620' : '#c054701a',
+                                  color: who === 'vendor' ? '#3d8a56' : '#c05470',
+                                  border: `1px solid ${who === 'vendor' ? '#3d8a56' : '#c05470'}`,
+                                }
                               : { background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)' }
                             }
                             title={`Mark: ${who === 'vendor' ? 'Vendor' : 'Monica'} replied last`}
