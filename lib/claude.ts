@@ -22,6 +22,21 @@ function inferRegion(location: string): VenueRecord['region'] {
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+const MONICA_EMAILS = ['meniasmonica@gmail.com', 'oseiandmonica@gmail.com']
+
+function inferSender(from: string): 'vendor' | 'user' {
+  const lower = from.toLowerCase()
+  return MONICA_EMAILS.some((e) => lower.includes(e)) ? 'user' : 'vendor'
+}
+
+function cleanSnippet(body: string): string {
+  return body
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, 500)
+}
+
 interface RawEmail {
   id: string
   threadId: string
@@ -143,6 +158,8 @@ export async function analyzeEmails(emails: RawEmail[]): Promise<VenueRecord[]> 
           gmailThreadId:     sourceEmail?.threadId,
           isOceanfront:      typeof v.isOceanfront === 'boolean' ? v.isOceanfront : undefined,
           tier:              typeof v.tier === 'string' ? v.tier : undefined,
+          lastEmailSnippet:  sourceEmail ? cleanSnippet(sourceEmail.body) : undefined,
+          lastEmailSender:   sourceEmail ? inferSender(sourceEmail.from) : undefined,
           analyzedAt:        new Date().toISOString(),
         })
       }
@@ -212,15 +229,16 @@ export async function draftFollowUpEmail(venue: {
   contactEmail: string
   originalSubject: string
   interested: boolean
+  lastEmailSnippet?: string
 }): Promise<{ subject: string; body: string }> {
   const prompt = `Draft a follow-up email for Monica's wedding venue search.
 
 Venue: ${venue.name}
 Original subject: ${venue.originalSubject}
 Monica's interest level: ${venue.interested ? 'Interested — wants to move forward' : 'Not interested — politely declining'}
-
+${venue.lastEmailSnippet ? `\nMost recent email in this thread:\n---\n${venue.lastEmailSnippet}\n---\n` : ''}
 ${venue.interested
-  ? 'Express interest, ask about next steps (site visit, contract, deposit).'
+  ? 'Reference what was said in the last email where relevant. Express interest and ask about next steps (site visit, contract, deposit).'
   : 'Politely thank them and let them know we have decided to go in a different direction.'}
 
 Sign off as Monica. Keep it concise and professional.

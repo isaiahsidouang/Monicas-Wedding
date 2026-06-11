@@ -27,6 +27,8 @@ export interface VenueRecord {
   followedUp?: string
   lastResponseDate?: string
   lastResponseFrom?: 'vendor' | 'user'
+  lastEmailSnippet?: string
+  lastEmailSender?: 'vendor' | 'user'
   nextAction?: string
   nextActionDueDate?: string
   // Notes & analysis

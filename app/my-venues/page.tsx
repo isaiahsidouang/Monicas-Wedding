@@ -62,7 +62,8 @@ export default function MyVenuesPage() {
       (v.status || '').toLowerCase().includes(q)
     const matchRegion = regionFilter === 'all' || (v.region || 'other') === regionFilter
     const matchStatus = statusFilter === 'all' || v.status === statusFilter
-    const matchReply = lastReplyFilter === 'all' || v.lastResponseFrom === lastReplyFilter
+    const effectiveSender = v.lastResponseFrom ?? v.lastEmailSender ?? (v.emailDate ? 'vendor' : undefined)
+    const matchReply = lastReplyFilter === 'all' || effectiveSender === lastReplyFilter
     return matchSearch && matchRegion && matchStatus && matchReply
   })
 

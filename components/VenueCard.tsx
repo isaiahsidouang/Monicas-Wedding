@@ -29,6 +29,16 @@ function truncate(str: string, max: number) {
   return str.length > max ? str.slice(0, max).trimEnd() + '…' : str
 }
 
+function formatEmailDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } catch {
+    return dateStr
+  }
+}
+
 function Row({ icon, label, value, maxChars = 80 }: { icon: React.ReactNode; label: string; value: string; maxChars?: number }) {
   return (
     <div className="flex gap-2 text-sm">
@@ -213,6 +223,25 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Notes</span>
               <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{truncate(venue.notes, 160)}</p>
+            </div>
+          )}
+
+          {/* Last email snippet */}
+          {venue.lastEmailSnippet && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Last Email</span>
+              <div
+                className="rounded-lg p-3 text-xs"
+                style={{ background: 'rgba(201,169,110,0.06)', borderLeft: '2px solid var(--accent)' }}
+              >
+                <div className="mb-1.5 font-medium" style={{ color: 'var(--accent)' }}>
+                  {venue.lastEmailSender === 'user' ? 'Monica' : (venue.contact.name || 'Venue')}
+                  {venue.emailDate ? ` · ${formatEmailDate(venue.emailDate)}` : ''}
+                </div>
+                <p className="leading-relaxed whitespace-pre-wrap break-words" style={{ color: 'var(--text-muted)' }}>
+                  {truncate(venue.lastEmailSnippet, 400)}
+                </p>
+              </div>
             </div>
           )}
 

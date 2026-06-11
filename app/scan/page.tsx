@@ -107,6 +107,7 @@ export default function ScanPage() {
           contactEmail: venue.contact.email,
           originalSubject: venue.emailSubject || venue.name,
           interested: type === 'follow-up',
+          lastEmailSnippet: venue.lastEmailSnippet,
         },
       }),
     })
