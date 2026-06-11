@@ -20,7 +20,17 @@ export default function ScanPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem('mw_venues')
-    if (stored) setVenues(JSON.parse(stored))
+    if (!stored) return
+    const loaded = JSON.parse(stored) as VenueRecord[]
+    const byName = new Map<string, VenueRecord>()
+    for (const v of loaded) {
+      const key = v.name.toLowerCase().replace(/[^a-z0-9]/g, '')
+      const curr = byName.get(key)
+      if (!curr || (curr.status === 'new' && v.status !== 'new')) byName.set(key, v)
+    }
+    const deduped = Array.from(byName.values())
+    setVenues(deduped)
+    localStorage.setItem('mw_venues', JSON.stringify(deduped))
   }, [])
 
   function persist(updated: VenueRecord[]) {
