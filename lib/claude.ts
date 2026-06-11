@@ -114,9 +114,14 @@ export async function analyzeEmails(emails: RawEmail[]): Promise<VenueRecord[]> 
         const sourceEmail = emailByIndex.get(globalIdx)
         const location   = typeof v.location === 'string' ? v.location : ''
 
+        const venueName = typeof v.name === 'string' ? v.name : 'unknown'
+        const deterministicId = sourceEmail
+          ? `${sourceEmail.id}:${venueName.toLowerCase().replace(/\s+/g, '_')}`
+          : `${venueName.toLowerCase().replace(/\s+/g, '_')}:${typeof v.contact === 'object' && v.contact !== null && 'email' in v.contact ? (v.contact as Record<string,string>).email : ''}`
+
         allRecords.push({
-          id:                sourceEmail?.id || crypto.randomUUID(),
-          name:              typeof v.name === 'string' ? v.name : 'Unknown',
+          id:                deterministicId,
+          name:              venueName === 'unknown' ? 'Unknown' : venueName,
           type:              (v.type as VenueRecord['type']) || 'unknown',
           region:            inferRegion(location),
           contact:           (v.contact as VenueRecord['contact']) || { email: '' },

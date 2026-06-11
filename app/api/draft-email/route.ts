@@ -16,8 +16,8 @@ export async function POST(req: Request) {
       return Response.json(draft)
     }
 
-    if (type === 'follow-up') {
-      const draft = await draftFollowUpEmail(venue)
+    if (type === 'follow-up' || type === 'decline') {
+      const draft = await draftFollowUpEmail({ ...venue, interested: type !== 'decline' })
       return Response.json(draft)
     }
 

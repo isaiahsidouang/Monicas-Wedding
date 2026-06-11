@@ -244,19 +244,21 @@ export default function VenueCard({ venue, onStatusChange, onDraftEmail }: Props
       {/* ── Actions ── */}
       {(onStatusChange || onDraftEmail) && (
         <div className="flex flex-wrap gap-2 px-4 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
-          {onDraftEmail && venue.status !== 'declined' && venue.status !== 'booked' && (
+          {onDraftEmail && venue.status !== 'booked' && (
             <>
-              <button
-                onClick={() => onDraftEmail(venue, 'follow-up')}
-                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-80"
-                style={{ border: '1px solid var(--accent)', color: 'var(--accent)' }}
-              >
-                Draft Follow-up
-              </button>
+              {venue.status !== 'declined' && (
+                <button
+                  onClick={() => onDraftEmail(venue, 'follow-up')}
+                  className="text-xs px-3 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-80"
+                  style={{ border: '1px solid var(--accent)', color: 'var(--accent)' }}
+                >
+                  Draft Follow-up
+                </button>
+              )}
               <button
                 onClick={() => onDraftEmail(venue, 'decline')}
                 className="text-xs px-3 py-1.5 rounded-lg transition-opacity hover:opacity-80"
-                style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+                style={{ border: '1px solid #f87171', color: '#f87171' }}
               >
                 Draft Decline
               </button>

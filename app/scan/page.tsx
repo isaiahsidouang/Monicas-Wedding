@@ -76,7 +76,11 @@ export default function ScanPage() {
         },
       }),
     })
-    if (!res.ok) return
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      alert(`Failed to generate draft: ${data.error || res.status}`)
+      return
+    }
     const { subject, body } = await res.json()
     const draft: DraftEmail = {
       id: crypto.randomUUID(),
