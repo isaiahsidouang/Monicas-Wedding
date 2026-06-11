@@ -11,9 +11,11 @@ import type { VenueRecord, DraftEmail } from '@/types'
 type SortKey = 'priorityScore' | 'name' | 'status' | 'emailDate'
 
 function venueKey(v: VenueRecord): string {
-  const name = v.name.toLowerCase().replace(/^(the|a|an)\s+/, '').replace(/[^a-z0-9]/g, '')
-  // Include location so "Four Seasons Chicago" and "Four Seasons Puerto Rico" stay separate
-  const loc  = (v.location || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20)
+  const name = v.name
+    .toLowerCase()
+    .replace(/^(the|a|an|historic|historical|iconic|legendary|award.winning)\s+/g, '')
+    .replace(/[^a-z0-9]/g, '')
+  const loc = (v.location || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20)
   return loc ? `${name}__${loc}` : name
 }
 
