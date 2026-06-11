@@ -10,21 +10,21 @@ import type { VenueRecord, DraftEmail } from '@/types'
 
 type SortKey = 'priorityScore' | 'name' | 'status' | 'emailDate'
 
-function venueKey(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/^(the|a|an)\s+/, '')   // strip leading "The", "A", "An"
-    .replace(/[^a-z0-9]/g, '')       // strip punctuation/spaces
+function venueKey(v: VenueRecord): string {
+  const name = v.name.toLowerCase().replace(/^(the|a|an)\s+/, '').replace(/[^a-z0-9]/g, '')
+  // Include location so "Four Seasons Chicago" and "Four Seasons Puerto Rico" stay separate
+  const loc  = (v.location || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20)
+  return loc ? `${name}__${loc}` : name
 }
 
 function deduplicateByName(venues: VenueRecord[]): VenueRecord[] {
-  const byName = new Map<string, VenueRecord>()
+  const map = new Map<string, VenueRecord>()
   for (const v of venues) {
-    const key = venueKey(v.name)
-    const curr = byName.get(key)
-    if (!curr || (curr.status === 'new' && v.status !== 'new')) byName.set(key, v)
+    const key = venueKey(v)
+    const curr = map.get(key)
+    if (!curr || (curr.status === 'new' && v.status !== 'new')) map.set(key, v)
   }
-  return Array.from(byName.values())
+  return Array.from(map.values())
 }
 
 export default function ScanPage() {
