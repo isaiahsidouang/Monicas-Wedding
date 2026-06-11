@@ -83,11 +83,21 @@ function toRow(v: VenueRecord): Record<string, string> {
 
 // KnownVenue region 'chicago' maps to VenueRecord region 'illinois'
 const KNOWN_REGION_MAP: Record<KnownVenue['region'], VenueRecord['region']> = {
-  california:    'california',
-  chicago:       'illinois',
-  miami:         'miami',
-  'puerto-rico': 'puerto-rico',
-  caribbean:     'caribbean',
+  california:     'california',
+  chicago:        'illinois',
+  miami:          'miami',
+  'puerto-rico':  'puerto-rico',
+  caribbean:      'caribbean',
+  hawaii:         'other',
+  'new-york':     'other',
+  'florida-keys': 'miami',
+  'new-england':  'other',
+  'las-vegas':    'other',
+  nashville:      'other',
+  'new-orleans':  'other',
+  scottsdale:     'other',
+  usvi:           'caribbean',
+  other:          'other',
 }
 
 function knownToRecord(kv: KnownVenue): VenueRecord {
