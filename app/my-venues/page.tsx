@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Table2, Download, Search } from 'lucide-react'
-import { loadFromDb } from '@/lib/db-client'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import type { VenueRecord } from '@/types'
 
 const REGION_LABELS: Record<string, string> = {
@@ -28,6 +28,7 @@ export default function MyVenuesPage() {
   const [search, setSearch] = useState('')
   const [regionFilter, setRegionFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [lastReplyFilter, setLastReplyFilter] = useState<'all' | 'vendor' | 'user'>('all')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -39,6 +40,13 @@ export default function MyVenuesPage() {
       })
     }
   }, [session])
+
+  function updateVenue(id: string, patch: Partial<VenueRecord>) {
+    const updated = venues.map((v) => v.id === id ? { ...v, ...patch } : v)
+    setVenues(updated)
+    localStorage.setItem('mw_venues', JSON.stringify(updated))
+    if (session) saveToDb('mw_venues', updated)
+  }
 
   const regions = ['all', ...Array.from(new Set(venues.map((v) => v.region || 'other').filter(Boolean)))]
   const statuses = ['all', ...Array.from(new Set(venues.map((v) => v.status).filter(Boolean)))]
@@ -54,7 +62,8 @@ export default function MyVenuesPage() {
       (v.status || '').toLowerCase().includes(q)
     const matchRegion = regionFilter === 'all' || (v.region || 'other') === regionFilter
     const matchStatus = statusFilter === 'all' || v.status === statusFilter
-    return matchSearch && matchRegion && matchStatus
+    const matchReply = lastReplyFilter === 'all' || v.lastResponseFrom === lastReplyFilter
+    return matchSearch && matchRegion && matchStatus && matchReply
   })
 
   async function handleExport() {
@@ -140,6 +149,16 @@ export default function MyVenuesPage() {
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+        <select
+          value={lastReplyFilter}
+          onChange={(e) => setLastReplyFilter(e.target.value as 'all' | 'vendor' | 'user')}
+          className="px-3 py-2 rounded-lg text-sm"
+          style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)' }}
+        >
+          <option value="all">Last Reply: All</option>
+          <option value="vendor">Vendor replied last</option>
+          <option value="user">Monica replied last</option>
+        </select>
       </div>
 
       {/* Count */}
@@ -166,7 +185,7 @@ export default function MyVenuesPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: '#fdf2f4', borderBottom: '1px solid var(--border)' }}>
-                  {['Venue / Vendor', 'Region', 'Contact', 'Status', 'Priority', 'Venue Fee', 'F&B Min', 'Available Dates', 'Next Action', 'Notes'].map((h) => (
+                  {['Venue / Vendor', 'Region', 'Contact', 'Status', 'Last Reply', 'Priority', 'Venue Fee', 'F&B Min', 'Available Dates', 'Next Action', 'Notes'].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--accent)' }}>
                       {h}
                     </th>
@@ -204,6 +223,26 @@ export default function MyVenuesPage() {
                       <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
                         {v.status || '—'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex gap-1">
+                        {(['vendor', 'user'] as const).map((who) => (
+                          <button
+                            key={who}
+                            onClick={() => updateVenue(v.id, {
+                              lastResponseFrom: v.lastResponseFrom === who ? undefined : who,
+                            })}
+                            className="text-xs px-2 py-0.5 rounded-full transition-colors"
+                            style={v.lastResponseFrom === who
+                              ? { background: who === 'vendor' ? '#3d8a5620' : '#c054701a', color: who === 'vendor' ? '#3d8a56' : '#c05470', border: `1px solid ${who === 'vendor' ? '#3d8a56' : '#c05470'}` }
+                              : { background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)' }
+                            }
+                            title={`Mark: ${who === 'vendor' ? 'Vendor' : 'Monica'} replied last`}
+                          >
+                            {who === 'vendor' ? 'Vendor' : 'Monica'}
+                          </button>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold" style={{ color: PRIORITY_COLORS[v.priority] || 'var(--text-muted)' }}>
                       {v.priority || '—'}

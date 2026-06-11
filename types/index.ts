@@ -26,6 +26,7 @@ export interface VenueRecord {
   tourScheduled?: string
   followedUp?: string
   lastResponseDate?: string
+  lastResponseFrom?: 'vendor' | 'user'
   nextAction?: string
   nextActionDueDate?: string
   // Notes & analysis
