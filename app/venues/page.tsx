@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useSession } from 'next-auth/react'
 import { Search, MapPin, Users, Waves, Send, Sparkles, ChevronDown } from 'lucide-react'
 import { knownVenues } from '@/lib/monica'
 import HelpBanner from '@/components/HelpBanner'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import type { KnownVenue, DraftEmail } from '@/types'
 
 // ── Filter Options ─────────────────────────────────────────────────────────────
@@ -263,10 +265,17 @@ export default function VenuesPage() {
   const [discoveredVenues, setDiscoveredVenues] = useState<KnownVenue[]>([])
   const [discoverError,    setDiscoverError]    = useState('')
 
+  const { data: session } = useSession()
+
   useEffect(() => {
     const stored = localStorage.getItem('mw_discovered_venues')
     if (stored) setDiscoveredVenues(JSON.parse(stored))
-  }, [])
+    if (session) {
+      loadFromDb('mw_discovered_venues').then(data => {
+        if (data) { setDiscoveredVenues(data as KnownVenue[]); localStorage.setItem('mw_discovered_venues', JSON.stringify(data)) }
+      })
+    }
+  }, [session])
 
   const allVenues = [...knownVenues, ...discoveredVenues]
   const filtered  = allVenues.filter(v => regionTab === 'all' || v.region === regionTab)
@@ -297,6 +306,7 @@ export default function VenuesPage() {
       ]
       setDiscoveredVenues(merged)
       localStorage.setItem('mw_discovered_venues', JSON.stringify(merged))
+      if (session) saveToDb('mw_discovered_venues', merged)
     } catch (e) {
       setDiscoverError(e instanceof Error ? e.message : 'Search failed')
     } finally {
@@ -335,7 +345,9 @@ export default function VenuesPage() {
       setGenerated(n => n + 1)
     }
     const existing = JSON.parse(localStorage.getItem('mw_drafts') || '[]')
-    localStorage.setItem('mw_drafts', JSON.stringify([...existing, ...newDrafts]))
+    const allDrafts = [...existing, ...newDrafts]
+    localStorage.setItem('mw_drafts', JSON.stringify(allDrafts))
+    if (session) saveToDb('mw_drafts', allDrafts)
     setGenerating(false)
     setSelected(new Set())
     alert(`${newDrafts.length} inquiry draft${newDrafts.length !== 1 ? 's' : ''} created! Go to the Drafts tab to review and send.`)
@@ -424,7 +436,7 @@ export default function VenuesPage() {
           </button>
           {discoveredVenues.length > 0 && !discovering && (
             <button
-              onClick={() => { setDiscoveredVenues([]); localStorage.removeItem('mw_discovered_venues') }}
+              onClick={() => { setDiscoveredVenues([]); localStorage.removeItem('mw_discovered_venues'); if (session) saveToDb('mw_discovered_venues', []) }}
               className="text-xs px-3 py-2 rounded-lg"
               style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}
             >

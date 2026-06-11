@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import { Users, Plus, Trash2, Edit2, Check, X } from 'lucide-react'
 import HelpBanner from '@/components/HelpBanner'
 import type { VendorRecord, VendorCategory } from '@/types'
@@ -28,6 +30,7 @@ const EMPTY_VENDOR: Omit<VendorRecord, 'id' | 'createdAt'> = {
 }
 
 export default function VendorsPage() {
+  const { data: session } = useSession()
   const [vendors, setVendors] = useState<VendorRecord[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editData, setEditData] = useState<Partial<VendorRecord>>({})
@@ -38,11 +41,17 @@ export default function VendorsPage() {
   useEffect(() => {
     const stored = localStorage.getItem('mw_vendors')
     if (stored) setVendors(JSON.parse(stored))
-  }, [])
+    if (session) {
+      loadFromDb('mw_vendors').then(data => {
+        if (data) { setVendors(data as VendorRecord[]); localStorage.setItem('mw_vendors', JSON.stringify(data)) }
+      })
+    }
+  }, [session])
 
   function persist(updated: VendorRecord[]) {
     setVendors(updated)
     localStorage.setItem('mw_vendors', JSON.stringify(updated))
+    if (session) saveToDb('mw_vendors', updated)
   }
 
   function addVendor() {

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import { CheckSquare, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import HelpBanner from '@/components/HelpBanner'
 import type { ChecklistItem } from '@/types'
@@ -69,6 +71,7 @@ const TIMEFRAME_ORDER = [
 const PRIORITY_COLORS = { high: '#c05470', medium: '#c9874a', low: '#7a9e7e' }
 
 export default function ChecklistPage() {
+  const { data: session } = useSession()
   const [items, setItems] = useState<ChecklistItem[]>([])
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [adding, setAdding] = useState(false)
@@ -80,19 +83,21 @@ export default function ChecklistPage() {
     if (stored) {
       setItems(JSON.parse(stored))
     } else {
-      const initial = DEFAULT_CHECKLIST.map((item) => ({
-        ...item,
-        id: crypto.randomUUID(),
-        completed: false,
-      }))
+      const initial = DEFAULT_CHECKLIST.map((item) => ({ ...item, id: crypto.randomUUID(), completed: false }))
       setItems(initial)
       localStorage.setItem('mw_checklist', JSON.stringify(initial))
     }
-  }, [])
+    if (session) {
+      loadFromDb('mw_checklist').then(data => {
+        if (data) { setItems(data as ChecklistItem[]); localStorage.setItem('mw_checklist', JSON.stringify(data)) }
+      })
+    }
+  }, [session])
 
   function persist(updated: ChecklistItem[]) {
     setItems(updated)
     localStorage.setItem('mw_checklist', JSON.stringify(updated))
+    if (session) saveToDb('mw_checklist', updated)
   }
 
   function toggle(id: string) {

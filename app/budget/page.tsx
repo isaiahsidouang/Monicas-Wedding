@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import { DollarSign, Plus, Trash2, Edit2, Check, X } from 'lucide-react'
 import HelpBanner from '@/components/HelpBanner'
 import type { BudgetItem } from '@/types'
@@ -33,6 +35,7 @@ const DEFAULT_BUDGET: Omit<BudgetItem, 'id'>[] = [
 const fmt = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 
 export default function BudgetPage() {
+  const { data: session } = useSession()
   const [items, setItems] = useState<BudgetItem[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editData, setEditData] = useState<Partial<BudgetItem>>({})
@@ -40,7 +43,6 @@ export default function BudgetPage() {
   const [newItem, setNewItem] = useState({ category: '', description: '', estimated: 0, actual: 0, paid: 0, vendor: '', notes: '' })
 
   useEffect(() => {
-    // v2: wipe the old auto-seeded $198k and start fresh
     if (localStorage.getItem('mw_budget_version') !== 'v2') {
       localStorage.removeItem('mw_budget')
       localStorage.setItem('mw_budget_version', 'v2')
@@ -53,11 +55,17 @@ export default function BudgetPage() {
       setItems(initial)
       localStorage.setItem('mw_budget', JSON.stringify(initial))
     }
-  }, [])
+    if (session) {
+      loadFromDb('mw_budget').then(data => {
+        if (data) { setItems(data as BudgetItem[]); localStorage.setItem('mw_budget', JSON.stringify(data)) }
+      })
+    }
+  }, [session])
 
   function persist(updated: BudgetItem[]) {
     setItems(updated)
     localStorage.setItem('mw_budget', JSON.stringify(updated))
+    if (session) saveToDb('mw_budget', updated)
   }
 
   function startEdit(item: BudgetItem) {

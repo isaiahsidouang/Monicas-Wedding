@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession, signIn } from 'next-auth/react'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import { Mail, RefreshCw, LogIn, SortAsc, FlaskConical } from 'lucide-react'
 import HelpBanner from '@/components/HelpBanner'
 import VenueCard from '@/components/VenueCard'
@@ -37,16 +38,26 @@ export default function ScanPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem('mw_venues')
-    if (!stored) return
-    const loaded = JSON.parse(stored) as VenueRecord[]
-    const deduped = deduplicateByName(loaded)
-    setVenues(deduped)
-    localStorage.setItem('mw_venues', JSON.stringify(deduped))
-  }, [])
+    if (stored) {
+      const deduped = deduplicateByName(JSON.parse(stored) as VenueRecord[])
+      setVenues(deduped)
+      localStorage.setItem('mw_venues', JSON.stringify(deduped))
+    }
+    if (session) {
+      loadFromDb('mw_venues').then(data => {
+        if (data) {
+          const deduped = deduplicateByName(data as VenueRecord[])
+          setVenues(deduped)
+          localStorage.setItem('mw_venues', JSON.stringify(deduped))
+        }
+      })
+    }
+  }, [session])
 
   function persist(updated: VenueRecord[]) {
     setVenues(updated)
     localStorage.setItem('mw_venues', JSON.stringify(updated))
+    if (session) saveToDb('mw_venues', updated)
   }
 
   async function runScan(url: string) {
@@ -115,7 +126,9 @@ export default function ScanPage() {
       createdAt: new Date().toISOString(),
     }
     const existing = JSON.parse(localStorage.getItem('mw_drafts') || '[]')
-    localStorage.setItem('mw_drafts', JSON.stringify([...existing, draft]))
+    const updated = [...existing, draft]
+    localStorage.setItem('mw_drafts', JSON.stringify(updated))
+    if (session) saveToDb('mw_drafts', updated)
     alert(`Draft created! Go to the Drafts tab to review and send to Gmail.`)
   }
 

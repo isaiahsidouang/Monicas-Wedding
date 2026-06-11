@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import { Clock, Plus, Trash2, Edit2, Check, X, GripVertical } from 'lucide-react'
 import HelpBanner from '@/components/HelpBanner'
 import type { TimelineItem } from '@/types'
@@ -46,6 +48,7 @@ function fmt12(time: string): string {
 }
 
 export default function TimelinePage() {
+  const { data: session } = useSession()
   const [items, setItems] = useState<TimelineItem[]>([])
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -62,12 +65,18 @@ export default function TimelinePage() {
       setItems(initial)
       localStorage.setItem('mw_timeline', JSON.stringify(initial))
     }
-  }, [])
+    if (session) {
+      loadFromDb('mw_timeline').then(data => {
+        if (data) { setItems(data as TimelineItem[]); localStorage.setItem('mw_timeline', JSON.stringify(data)) }
+      })
+    }
+  }, [session])
 
   function persist(updated: TimelineItem[]) {
     const sorted = [...updated].sort((a, b) => a.time.localeCompare(b.time))
     setItems(sorted)
     localStorage.setItem('mw_timeline', JSON.stringify(sorted))
+    if (session) saveToDb('mw_timeline', sorted)
   }
 
   function save() {

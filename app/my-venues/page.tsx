@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { Table2, Download, Search } from 'lucide-react'
+import { loadFromDb } from '@/lib/db-client'
 import type { VenueRecord } from '@/types'
 
 const REGION_LABELS: Record<string, string> = {
@@ -21,6 +23,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 }
 
 export default function MyVenuesPage() {
+  const { data: session } = useSession()
   const [venues, setVenues] = useState<VenueRecord[]>([])
   const [search, setSearch] = useState('')
   const [regionFilter, setRegionFilter] = useState('all')
@@ -30,7 +33,12 @@ export default function MyVenuesPage() {
   useEffect(() => {
     const stored = localStorage.getItem('mw_venues')
     if (stored) setVenues(JSON.parse(stored))
-  }, [])
+    if (session) {
+      loadFromDb('mw_venues').then(data => {
+        if (data) { setVenues(data as VenueRecord[]); localStorage.setItem('mw_venues', JSON.stringify(data)) }
+      })
+    }
+  }, [session])
 
   const regions = ['all', ...Array.from(new Set(venues.map((v) => v.region || 'other').filter(Boolean)))]
   const statuses = ['all', ...Array.from(new Set(venues.map((v) => v.status).filter(Boolean)))]

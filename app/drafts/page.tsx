@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession, signIn } from 'next-auth/react'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import { FileText, LogIn, CheckCheck } from 'lucide-react'
 import HelpBanner from '@/components/HelpBanner'
 import DraftCard from '@/components/DraftCard'
@@ -15,11 +16,17 @@ export default function DraftsPage() {
   useEffect(() => {
     const stored = localStorage.getItem('mw_drafts')
     if (stored) setDrafts(JSON.parse(stored))
-  }, [])
+    if (session) {
+      loadFromDb('mw_drafts').then(data => {
+        if (data) { setDrafts(data as DraftEmail[]); localStorage.setItem('mw_drafts', JSON.stringify(data)) }
+      })
+    }
+  }, [session])
 
   function persist(updated: DraftEmail[]) {
     setDrafts(updated)
     localStorage.setItem('mw_drafts', JSON.stringify(updated))
+    if (session) saveToDb('mw_drafts', updated)
   }
 
   function updateDraft(id: string, updates: Partial<DraftEmail>) {

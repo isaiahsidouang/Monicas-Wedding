@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { loadFromDb, saveToDb } from '@/lib/db-client'
 import { FileCheck, Plus, Trash2, Edit2, Check, X, AlertCircle } from 'lucide-react'
 import HelpBanner from '@/components/HelpBanner'
 import type { ContractRecord } from '@/types'
@@ -24,6 +26,7 @@ function daysUntil(dateStr?: string): number | null {
 }
 
 export default function ContractsPage() {
+  const { data: session } = useSession()
   const [contracts, setContracts] = useState<ContractRecord[]>([])
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -32,11 +35,17 @@ export default function ContractsPage() {
   useEffect(() => {
     const stored = localStorage.getItem('mw_contracts')
     if (stored) setContracts(JSON.parse(stored))
-  }, [])
+    if (session) {
+      loadFromDb('mw_contracts').then(data => {
+        if (data) { setContracts(data as ContractRecord[]); localStorage.setItem('mw_contracts', JSON.stringify(data)) }
+      })
+    }
+  }, [session])
 
   function persist(updated: ContractRecord[]) {
     setContracts(updated)
     localStorage.setItem('mw_contracts', JSON.stringify(updated))
+    if (session) saveToDb('mw_contracts', updated)
   }
 
   function save() {
