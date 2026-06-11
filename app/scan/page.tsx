@@ -132,6 +132,10 @@ export default function ScanPage() {
     const updated = [...existing, draft]
     localStorage.setItem('mw_drafts', JSON.stringify(updated))
     if (session) saveToDb('mw_drafts', updated)
+
+    // Mark venue as Monica replied last — she just drafted a response
+    persist(venues.map((v) => v.id === venue.id ? { ...v, lastResponseFrom: 'user' as const } : v))
+
     alert(`Draft created! Go to the Drafts tab to review and send to Gmail.`)
   }
 

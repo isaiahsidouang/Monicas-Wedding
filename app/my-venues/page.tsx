@@ -92,18 +92,25 @@ export default function MyVenuesPage() {
   const [sortCol, setSortCol] = useState<SortCol | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [loading, setLoading] = useState(false)
+  const [userModified, setUserModified] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('mw_venues')
     if (stored) setVenues(JSON.parse(stored))
     if (session) {
       loadFromDb('mw_venues').then(data => {
-        if (data) { setVenues(data as VenueRecord[]); localStorage.setItem('mw_venues', JSON.stringify(data)) }
+        // Don't overwrite local edits made before the DB response came back
+        if (data && !userModified) {
+          setVenues(data as VenueRecord[])
+          localStorage.setItem('mw_venues', JSON.stringify(data))
+        }
       })
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session])
 
   function updateVenue(id: string, patch: Partial<VenueRecord>) {
+    setUserModified(true)
     const updated = venues.map((v) => v.id === id ? { ...v, ...patch } : v)
     setVenues(updated)
     localStorage.setItem('mw_venues', JSON.stringify(updated))
