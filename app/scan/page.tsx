@@ -53,9 +53,23 @@ export default function ScanPage() {
   function handleTestScan() { runScan('/api/gmail/scan-test') }
 
   function mergeVenues(existing: VenueRecord[], fresh: VenueRecord[]): VenueRecord[] {
+    // ID-based merge first (fresh overwrites existing for same ID)
     const map = new Map(existing.map((v) => [v.id, v]))
     for (const v of fresh) map.set(v.id, v)
-    return Array.from(map.values())
+    const merged = Array.from(map.values())
+
+    // Second-pass: deduplicate by normalized venue name.
+    // Keeps whichever copy has a non-'new' status (preserves Monica's work);
+    // if both are 'new', keeps the fresh one.
+    const byName = new Map<string, VenueRecord>()
+    for (const v of merged) {
+      const key = v.name.toLowerCase().replace(/[^a-z0-9]/g, '')
+      const existing = byName.get(key)
+      if (!existing) { byName.set(key, v); continue }
+      // Prefer the record with a real status over 'new'
+      if (existing.status === 'new' && v.status !== 'new') byName.set(key, v)
+    }
+    return Array.from(byName.values())
   }
 
   function handleStatusChange(id: string, status: VenueRecord['status']) {
