@@ -13,7 +13,7 @@ type SortKey = 'priorityScore' | 'name' | 'status' | 'emailDate'
 function venueKey(v: VenueRecord): string {
   const name = v.name
     .toLowerCase()
-    .replace(/^(the|a|an|historic|historical|iconic|legendary|award.winning)\s+/g, '')
+    .replace(/^((the|a|an|historic|historical|iconic|legendary|award.winning)\s+)+/, '')
     .replace(/[^a-z0-9]/g, '')
   const loc = (v.location || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20)
   return loc ? `${name}__${loc}` : name
