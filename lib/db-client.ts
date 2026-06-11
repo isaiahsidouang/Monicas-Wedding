@@ -14,5 +14,7 @@ export function saveToDb(key: string, value: unknown): void {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ key, value }),
-  }).catch(() => {})
+  }).then(res => {
+    if (!res.ok) res.json().then(d => console.error('[db] save failed', key, d)).catch(() => {})
+  }).catch(err => console.error('[db] save error', key, err))
 }
